@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.quangcv.cameraview.sample;
+package com.quangcv.cameraview.core;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -37,13 +37,20 @@ import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.quangcv.cameraview.AspectRatio;
+import com.quangcv.cameraview.CameraView;
+import com.quangcv.cameraview.Constants;
+import com.quangcv.cameraview.Size;
+import com.quangcv.cameraview.SizeMap;
+import com.quangcv.cameraview.SurfaceCallback;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedSet;
 
 @TargetApi(21)
-class Camera2 extends BaseCamera {
+public class Camera2 extends BaseCamera {
 
     private static final String TAG = "Camera2";
 
@@ -209,7 +216,7 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    boolean start() {
+    public boolean start() {
         if (!chooseCameraIdByFacing()) {
             return false;
         }
@@ -220,7 +227,7 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    void stop() {
+    public void stop() {
         if (mCaptureSession != null) {
             mCaptureSession.close();
             mCaptureSession = null;
@@ -236,12 +243,12 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    boolean isCameraOpened() {
+    public boolean isCameraOpened() {
         return mCamera != null;
     }
 
     @Override
-    void setFacing(int facing) {
+    public void setFacing(int facing) {
         if (mFacing == facing) {
             return;
         }
@@ -253,17 +260,17 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    int getFacing() {
+    public int getFacing() {
         return mFacing;
     }
 
     @Override
-    Set<AspectRatio> getSupportedAspectRatios() {
+    public Set<AspectRatio> getSupportedAspectRatios() {
         return mPreviewSizes.ratios();
     }
 
     @Override
-    boolean setAspectRatio(AspectRatio ratio) {
+    public boolean setAspectRatio(AspectRatio ratio) {
         if (ratio == null || ratio.equals(mAspectRatio) ||
                 !mPreviewSizes.ratios().contains(ratio)) {
             // TODO: Better error handling
@@ -280,12 +287,12 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    AspectRatio getAspectRatio() {
+    public AspectRatio getAspectRatio() {
         return mAspectRatio;
     }
 
     @Override
-    void setAutoFocus(boolean autoFocus) {
+    public void setAutoFocus(boolean autoFocus) {
         if (mAutoFocus == autoFocus) {
             return;
         }
@@ -304,12 +311,12 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    boolean getAutoFocus() {
+    public boolean getAutoFocus() {
         return mAutoFocus;
     }
 
     @Override
-    void setFlash(int flash) {
+    public void setFlash(int flash) {
         if (mFlash == flash) {
             return;
         }
@@ -329,12 +336,12 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    int getFlash() {
+    public int getFlash() {
         return mFlash;
     }
 
     @Override
-    void takePicture() {
+    public void takePicture() {
         if (mAutoFocus) {
             lockFocus();
         } else {
@@ -343,7 +350,7 @@ class Camera2 extends BaseCamera {
     }
 
     @Override
-    void setDisplayOrientation(int displayOrientation) {
+    public void setDisplayOrientation(int displayOrientation) {
         mDisplayOrientation = displayOrientation;
         mPreview.setDisplayOrientation(mDisplayOrientation);
     }
@@ -507,8 +514,8 @@ class Camera2 extends BaseCamera {
      */
     private Size chooseOptimalSize() {
         int surfaceLonger, surfaceShorter;
-        final int surfaceWidth = mPreview.getViewWidth();
-        final int surfaceHeight = mPreview.getViewHeight();
+        final int surfaceWidth = mPreview.getSurfaceWidth();
+        final int surfaceHeight = mPreview.getSurfaceHeight();
         if (surfaceWidth < surfaceHeight) {
             surfaceLonger = surfaceHeight;
             surfaceShorter = surfaceWidth;

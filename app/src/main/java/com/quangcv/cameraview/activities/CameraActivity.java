@@ -1,4 +1,4 @@
-package com.quangcv.cameraview;
+package com.quangcv.cameraview.activities;
 
 import android.Manifest;
 import android.app.Activity;
@@ -10,8 +10,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
-import com.quangcv.cameraview.sample.CameraView;
-import com.quangcv.cameraview.sample.Constants;
+import com.quangcv.cameraview.CameraView;
+import com.quangcv.cameraview.Constants;
+import com.quangcv.cameraview.R;
 
 /**
  * Created by QuangCV on 31-Aug-2019

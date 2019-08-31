@@ -1,8 +1,15 @@
-package com.quangcv.cameraview.sample;
+package com.quangcv.cameraview.core;
 
 import android.annotation.SuppressLint;
 import android.hardware.Camera;
 import android.support.v4.util.SparseArrayCompat;
+
+import com.quangcv.cameraview.AspectRatio;
+import com.quangcv.cameraview.CameraView;
+import com.quangcv.cameraview.Constants;
+import com.quangcv.cameraview.Size;
+import com.quangcv.cameraview.SizeMap;
+import com.quangcv.cameraview.SurfaceCallback;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,7 +17,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class Camera1 extends BaseCamera {
+public class Camera1 extends BaseCamera {
 
     private static final int INVALID_CAMERA_ID = -1;
 
@@ -64,7 +71,7 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    boolean start() {
+    public boolean start() {
         chooseCamera();
         openCamera();
         if (mPreview.isReady()) {
@@ -76,7 +83,7 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    void stop() {
+    public void stop() {
         if (mCamera != null) {
             mCamera.stopPreview();
         }
@@ -95,12 +102,12 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    boolean isCameraOpened() {
+    public boolean isCameraOpened() {
         return mCamera != null;
     }
 
     @Override
-    void setFacing(int facing) {
+    public void setFacing(int facing) {
         if (mFacing == facing) {
             return;
         }
@@ -112,12 +119,12 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    int getFacing() {
+    public int getFacing() {
         return mFacing;
     }
 
     @Override
-    Set<AspectRatio> getSupportedAspectRatios() {
+    public Set<AspectRatio> getSupportedAspectRatios() {
         SizeMap idealAspectRatios = mPreviewSizes;
         for (AspectRatio aspectRatio : idealAspectRatios.ratios()) {
             if (mPictureSizes.sizes(aspectRatio) == null) {
@@ -128,7 +135,7 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    boolean setAspectRatio(AspectRatio ratio) {
+    public boolean setAspectRatio(AspectRatio ratio) {
         if (mAspectRatio == null || !isCameraOpened()) {
             // Handle this later when camera is opened
             mAspectRatio = ratio;
@@ -147,12 +154,12 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    AspectRatio getAspectRatio() {
+    public AspectRatio getAspectRatio() {
         return mAspectRatio;
     }
 
     @Override
-    void setAutoFocus(boolean autoFocus) {
+    public void setAutoFocus(boolean autoFocus) {
         if (mAutoFocus == autoFocus) {
             return;
         }
@@ -162,7 +169,7 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    boolean getAutoFocus() {
+    public boolean getAutoFocus() {
         if (!isCameraOpened()) {
             return mAutoFocus;
         }
@@ -171,7 +178,7 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    void setFlash(int flash) {
+    public void setFlash(int flash) {
         if (flash == mFlash) {
             return;
         }
@@ -181,12 +188,12 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    int getFlash() {
+    public int getFlash() {
         return mFlash;
     }
 
     @Override
-    void takePicture() {
+    public void takePicture() {
         if (!isCameraOpened()) {
             throw new IllegalStateException(
                     "Camera is not ready. Call start() before takePicture().");
@@ -219,7 +226,7 @@ class Camera1 extends BaseCamera {
     }
 
     @Override
-    void setDisplayOrientation(int displayOrientation) {
+    public void setDisplayOrientation(int displayOrientation) {
         if (mDisplayOrientation == displayOrientation) {
             return;
         }
@@ -313,8 +320,8 @@ class Camera1 extends BaseCamera {
         }
         int desiredWidth;
         int desiredHeight;
-        final int surfaceWidth = mPreview.getViewWidth();
-        final int surfaceHeight = mPreview.getViewHeight();
+        final int surfaceWidth = mPreview.getSurfaceWidth();
+        final int surfaceHeight = mPreview.getSurfaceHeight();
         if (isLandscape(mDisplayOrientation)) {
             desiredWidth = surfaceHeight;
             desiredHeight = surfaceWidth;

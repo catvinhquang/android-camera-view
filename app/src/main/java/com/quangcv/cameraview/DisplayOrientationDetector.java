@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.quangcv.cameraview.sample;
+package com.quangcv.cameraview;
 
 import android.content.Context;
 import android.util.SparseIntArray;

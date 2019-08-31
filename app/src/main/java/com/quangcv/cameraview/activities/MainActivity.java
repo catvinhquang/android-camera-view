@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.quangcv.cameraview.sample;
+package com.quangcv.cameraview.activities;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -42,6 +42,11 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.quangcv.cameraview.AspectRatio;
+import com.quangcv.cameraview.AspectRatioFragment;
+import com.quangcv.cameraview.CameraCallback;
+import com.quangcv.cameraview.CameraView;
+import com.quangcv.cameraview.Constants;
 import com.quangcv.cameraview.R;
 
 import java.io.File;

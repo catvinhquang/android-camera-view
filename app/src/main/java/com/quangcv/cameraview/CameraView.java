@@ -1,4 +1,4 @@
-package com.quangcv.cameraview.sample;
+package com.quangcv.cameraview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -10,18 +10,20 @@ import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.quangcv.cameraview.R;
+import com.quangcv.cameraview.core.BaseCamera;
+import com.quangcv.cameraview.core.Camera1;
+import com.quangcv.cameraview.core.Camera2;
 
 import java.util.Set;
 
-public class CameraView extends SurfaceView {
+public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     private DisplayOrientationDetector mDisplayOrientationDetector;
     private BaseCamera mImpl;
 
     private SurfaceCallback surfaceCallback;
-    private int mWidth;
-    private int mHeight;
+    private int surfaceWidth;
+    private int surfaceHeight;
 
     public CameraView(Context context) {
         this(context, null);
@@ -38,25 +40,7 @@ public class CameraView extends SurfaceView {
 
         SurfaceHolder holder = getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        holder.addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder h) {
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder h, int format, int width, int height) {
-                setSize(width, height);
-                if (!ViewCompat.isInLayout(CameraView.this)) {
-                    surfaceCallback.onSurfaceChanged();
-                }
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder h) {
-                setSize(0, 0);
-            }
-        });
-
+        holder.addCallback(this);
 
         if (Build.VERSION.SDK_INT < 21) {
             mImpl = new Camera1(this);
@@ -81,6 +65,25 @@ public class CameraView extends SurfaceView {
                 mImpl.setDisplayOrientation(displayOrientation);
             }
         };
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        surfaceWidth = width;
+        surfaceHeight = height;
+        if (!ViewCompat.isInLayout(CameraView.this)) {
+            surfaceCallback.onSurfaceChanged();
+        }
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        surfaceWidth = surfaceHeight = 0;
     }
 
     @Override
@@ -165,30 +168,26 @@ public class CameraView extends SurfaceView {
 
 
     // ==== surfaceview preview
-    void setSurfaceCallback(SurfaceCallback callback) {
+    public void setSurfaceCallback(SurfaceCallback callback) {
         surfaceCallback = callback;
     }
 
-    void setSize(int width, int height) {
-        this.mWidth = width;
-        this.mHeight = height;
+    public int getSurfaceWidth() {
+        return surfaceWidth;
     }
 
-    int getViewWidth() {
-        return mWidth;
+    public int getSurfaceHeight() {
+        return surfaceHeight;
     }
 
-    int getViewHeight() {
-        return mHeight;
+    public boolean isReady() {
+        return surfaceWidth != 0 && surfaceHeight != 0;
     }
 
-    boolean isReady() {
-        return mWidth != 0 && mHeight != 0;
+    public void setDisplayOrientation(int displayOrientation) {
     }
 
-    void setDisplayOrientation(int displayOrientation) {
+    public void setBufferSize(int width, int height) {
     }
 
-    void setBufferSize(int width, int height) {
-    }
 }

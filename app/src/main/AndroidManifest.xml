@@ -7,7 +7,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="CameraView"
         android:theme="@style/Theme.Demo">
-                <activity android:name=".sample.MainActivity">
+                <activity android:name=".activities.MainActivity">
                     <intent-filter>
                         <action android:name="android.intent.action.MAIN" />
 
