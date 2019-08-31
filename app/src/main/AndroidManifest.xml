@@ -7,7 +7,15 @@
         android:icon="@mipmap/ic_launcher"
         android:label="CameraView"
         android:theme="@style/Theme.Demo">
-        <activity android:name=".MainActivity">
+<!--        <activity android:name=".sample.MainActivity">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
+
+        <activity android:name=".CameraActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
