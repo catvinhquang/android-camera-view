@@ -8,7 +8,7 @@ import android.view.SurfaceView;
 
 class SurfaceViewPreview extends SurfaceView {
 
-    private Callback mCallback;
+    private SurfaceCallback surfaceCallback;
     private int mWidth;
     private int mHeight;
 
@@ -34,7 +34,7 @@ class SurfaceViewPreview extends SurfaceView {
             public void surfaceChanged(SurfaceHolder h, int format, int width, int height) {
                 setSize(width, height);
                 if (!ViewCompat.isInLayout(SurfaceViewPreview.this)) {
-                    dispatchSurfaceChanged();
+                    surfaceCallback.onSurfaceChanged();
                 }
             }
 
@@ -45,12 +45,8 @@ class SurfaceViewPreview extends SurfaceView {
         });
     }
 
-    void setSurfaceCallback(Callback callback) {
-        mCallback = callback;
-    }
-
-    void dispatchSurfaceChanged() {
-        mCallback.onSurfaceChanged();
+    void setSurfaceCallback(SurfaceCallback callback) {
+        surfaceCallback = callback;
     }
 
     void setSize(int width, int height) {
@@ -68,10 +64,6 @@ class SurfaceViewPreview extends SurfaceView {
 
     boolean isReady() {
         return mWidth != 0 && mHeight != 0;
-    }
-
-    public interface Callback {
-        void onSurfaceChanged();
     }
 
     void setDisplayOrientation(int displayOrientation) {

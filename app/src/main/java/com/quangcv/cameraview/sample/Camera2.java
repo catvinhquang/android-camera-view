@@ -200,7 +200,7 @@ class Camera2 extends BaseCamera {
     public Camera2(SurfaceViewPreview preview, Context context) {
         super(preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        mPreview.setSurfaceCallback(new SurfaceViewPreview.Callback() {
+        mPreview.setSurfaceCallback(new SurfaceCallback() {
             @Override
             public void onSurfaceChanged() {
                 startCaptureSession();
@@ -653,8 +653,8 @@ class Camera2 extends BaseCamera {
                     new CameraCaptureSession.CaptureCallback() {
                         @Override
                         public void onCaptureCompleted(@NonNull CameraCaptureSession session,
-                                @NonNull CaptureRequest request,
-                                @NonNull TotalCaptureResult result) {
+                                                       @NonNull CaptureRequest request,
+                                                       @NonNull TotalCaptureResult result) {
                             unlockFocus();
                         }
                     }, null);
