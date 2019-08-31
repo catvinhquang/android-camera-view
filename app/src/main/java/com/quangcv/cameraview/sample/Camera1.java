@@ -1,10 +1,8 @@
 package com.quangcv.cameraview.sample;
 
 import android.annotation.SuppressLint;
-import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.support.v4.util.SparseArrayCompat;
-import android.view.SurfaceHolder;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,8 +50,8 @@ class Camera1 extends CameraViewImpl {
 
     private int mDisplayOrientation;
 
-    Camera1(Callback callback, PreviewImpl preview) {
-        super(callback, preview);
+    Camera1(PreviewImpl preview) {
+        super(preview);
         preview.setCallback(new PreviewImpl.Callback() {
             @Override
             public void onSurfaceChanged() {
@@ -212,7 +210,7 @@ class Camera1 extends CameraViewImpl {
                 @Override
                 public void onPictureTaken(byte[] data, Camera camera) {
                     isPictureCaptureInProgress.set(false);
-                    mCallback.onPictureTaken(data);
+                    callback.onPictureTaken(data);
                     camera.cancelAutoFocus();
                     camera.startPreview();
                 }
@@ -269,7 +267,7 @@ class Camera1 extends CameraViewImpl {
         }
         adjustCameraParameters();
         mCamera.setDisplayOrientation(calcDisplayOrientation(mDisplayOrientation));
-        mCallback.onCameraOpened();
+        callback.onCameraOpened();
     }
 
     private AspectRatio chooseAspectRatio() {
@@ -339,7 +337,7 @@ class Camera1 extends CameraViewImpl {
         if (mCamera != null) {
             mCamera.release();
             mCamera = null;
-            mCallback.onCameraClosed();
+            callback.onCameraClosed();
         }
     }
 

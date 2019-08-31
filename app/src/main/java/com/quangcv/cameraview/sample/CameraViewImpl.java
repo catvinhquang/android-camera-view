@@ -22,17 +22,24 @@ import java.util.Set;
 
 abstract class CameraViewImpl {
 
-    protected final Callback mCallback;
+    protected CameraCallback callback;
 
     protected final PreviewImpl mPreview;
 
-    CameraViewImpl(Callback callback, PreviewImpl preview) {
-        mCallback = callback;
+    CameraViewImpl(PreviewImpl preview) {
         mPreview = preview;
     }
 
     View getView() {
         return mPreview.getView();
+    }
+
+    public void setCallback(CameraCallback callback) {
+        this.callback = callback;
+    }
+
+    public CameraCallback getCallback() {
+        return callback;
     }
 
     /**
@@ -68,15 +75,5 @@ abstract class CameraViewImpl {
     abstract void takePicture();
 
     abstract void setDisplayOrientation(int displayOrientation);
-
-    interface Callback {
-
-        void onCameraOpened();
-
-        void onCameraClosed();
-
-        void onPictureTaken(byte[] data);
-
-    }
 
 }

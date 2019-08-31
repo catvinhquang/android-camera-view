@@ -57,7 +57,7 @@ import java.util.Set;
  */
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback,
-        AspectRatioFragment.Listener {
+        AspectRatioFragment.Listener, CameraCallback {
 
     private static final String TAG = "MainActivity";
 
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         mCameraView = findViewById(R.id.camera);
         if (mCameraView != null) {
-            mCameraView.addCallback(mCallback);
+            mCameraView.setCallback(this);
         }
         ImageView fab = findViewById(R.id.take_picture);
         if (fab != null) {
@@ -233,50 +233,43 @@ public class MainActivity extends AppCompatActivity implements
         return mBackgroundHandler;
     }
 
-    private CameraView.Callback mCallback
-            = new CameraView.Callback() {
+    @Override
+    public void onCameraOpened() {
+        Log.d(TAG, "onCameraOpened");
+    }
 
-        @Override
-        public void onCameraOpened(CameraView cameraView) {
-            Log.d(TAG, "onCameraOpened");
-        }
+    @Override
+    public void onCameraClosed() {
+        Log.d(TAG, "onCameraClosed");
+    }
 
-        @Override
-        public void onCameraClosed(CameraView cameraView) {
-            Log.d(TAG, "onCameraClosed");
-        }
-
-        @Override
-        public void onPictureTaken(CameraView cameraView, final byte[] data) {
-            Log.d(TAG, "onPictureTaken " + data.length);
-            Toast.makeText(cameraView.getContext(), R.string.picture_taken, Toast.LENGTH_SHORT)
-                    .show();
-            getBackgroundHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-                            "picture.jpg");
-                    OutputStream os = null;
-                    try {
-                        os = new FileOutputStream(file);
-                        os.write(data);
-                        os.close();
-                    } catch (IOException e) {
-                        Log.w(TAG, "Cannot write to " + file, e);
-                    } finally {
-                        if (os != null) {
-                            try {
-                                os.close();
-                            } catch (IOException e) {
-                                // Ignore
-                            }
+    @Override
+    public void onPictureTaken(final byte[] data) {
+        Log.d(TAG, "onPictureTaken " + data.length);
+        Toast.makeText(this, R.string.picture_taken, Toast.LENGTH_SHORT).show();
+        getBackgroundHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "picture.jpg");
+                OutputStream os = null;
+                try {
+                    os = new FileOutputStream(file);
+                    os.write(data);
+                    os.close();
+                } catch (IOException e) {
+                    Log.w(TAG, "Cannot write to " + file, e);
+                } finally {
+                    if (os != null) {
+                        try {
+                            os.close();
+                        } catch (IOException e) {
+                            // Ignore
                         }
                     }
                 }
-            });
-        }
-
-    };
+            }
+        });
+    }
 
     public static class ConfirmationDialogFragment extends DialogFragment {
 

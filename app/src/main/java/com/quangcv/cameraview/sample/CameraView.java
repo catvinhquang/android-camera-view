@@ -12,14 +12,11 @@ import android.widget.FrameLayout;
 
 import com.quangcv.cameraview.R;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 public class CameraView extends FrameLayout {
 
-    private final CallbackBridge mCallbacks;
     private final DisplayOrientationDetector mDisplayOrientationDetector;
-
     private CameraViewImpl mImpl;
 
     public CameraView(Context context) {
@@ -33,17 +30,15 @@ public class CameraView extends FrameLayout {
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         if (isInEditMode()) {
-            mCallbacks = null;
             mDisplayOrientationDetector = null;
             return;
         }
 
         PreviewImpl preview = createPreviewImpl(context);
-        mCallbacks = new CallbackBridge();
         if (Build.VERSION.SDK_INT < 21) {
-            mImpl = new Camera1(mCallbacks, preview);
+            mImpl = new Camera1(preview);
         } else {
-            mImpl = new Camera2(mCallbacks, preview, context);
+            mImpl = new Camera2(preview, context);
         }
 
         TypedArray a = context.obtainStyledAttributes(attrs,
@@ -117,10 +112,9 @@ public class CameraView extends FrameLayout {
         if (!mImpl.start()) {
             // Fall back to Camera1
             // Camera2 uses legacy hardware layer
-
-            Parcelable state = onSaveInstanceState();
-            mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
-            onRestoreInstanceState(state);
+            CameraCallback c = mImpl.getCallback();
+            mImpl = new Camera1(createPreviewImpl(getContext()));
+            mImpl.setCallback(c);
             mImpl.start();
         }
     }
@@ -129,16 +123,8 @@ public class CameraView extends FrameLayout {
         mImpl.stop();
     }
 
-    public boolean isCameraOpened() {
-        return mImpl.isCameraOpened();
-    }
-
-    public void addCallback(@NonNull Callback callback) {
-        mCallbacks.add(callback);
-    }
-
-    public void removeCallback(@NonNull Callback callback) {
-        mCallbacks.remove(callback);
+    public void setCallback(@NonNull CameraCallback callback) {
+        mImpl.setCallback(callback);
     }
 
     public void setFacing(@Constants.Facing int facing) {
@@ -208,69 +194,8 @@ public class CameraView extends FrameLayout {
         return mImpl.getFlash();
     }
 
-    /**
-     * Take a picture. The result will be returned to
-     * {@link Callback#onPictureTaken(CameraView, byte[])}.
-     */
     public void takePicture() {
         mImpl.takePicture();
-    }
-
-    private class CallbackBridge implements CameraViewImpl.Callback {
-
-        private final ArrayList<Callback> mCallbacks = new ArrayList<>();
-
-        private boolean mRequestLayoutOnOpen;
-
-        CallbackBridge() {
-        }
-
-        public void add(Callback callback) {
-            mCallbacks.add(callback);
-        }
-
-        public void remove(Callback callback) {
-            mCallbacks.remove(callback);
-        }
-
-        @Override
-        public void onCameraOpened() {
-            if (mRequestLayoutOnOpen) {
-                mRequestLayoutOnOpen = false;
-                requestLayout();
-            }
-            for (Callback callback : mCallbacks) {
-                callback.onCameraOpened(CameraView.this);
-            }
-        }
-
-        @Override
-        public void onCameraClosed() {
-            for (Callback callback : mCallbacks) {
-                callback.onCameraClosed(CameraView.this);
-            }
-        }
-
-        @Override
-        public void onPictureTaken(byte[] data) {
-            for (Callback callback : mCallbacks) {
-                callback.onPictureTaken(CameraView.this, data);
-            }
-        }
-
-        public void reserveRequestLayoutOnOpen() {
-            mRequestLayoutOnOpen = true;
-        }
-    }
-
-    public interface Callback {
-
-        void onCameraOpened(CameraView cameraView);
-
-        void onCameraClosed(CameraView cameraView);
-
-        void onPictureTaken(CameraView cameraView, byte[] data);
-
     }
 
 }
