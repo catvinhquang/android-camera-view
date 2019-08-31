@@ -16,7 +16,6 @@
 
 package com.quangcv.cameraview.sample;
 
-import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -24,21 +23,17 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.quangcv.cameraview.R;
-
 class SurfaceViewPreview {
 
-    final SurfaceView mSurfaceView;
-
+    private SurfaceView mSurfaceView;
     private Callback mCallback;
+    private int width;
+    private int height;
 
-    private int mWidth;
+    SurfaceViewPreview(ViewGroup parent) {
+        mSurfaceView = new SurfaceView(parent.getContext());
+        parent.addView(mSurfaceView);
 
-    private int mHeight;
-
-    SurfaceViewPreview(Context context, ViewGroup parent) {
-        final View view = View.inflate(context, R.layout.surface_view, parent);
-        mSurfaceView = view.findViewById(R.id.surface_view);
         final SurfaceHolder holder = mSurfaceView.getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(new SurfaceHolder.Callback() {
@@ -77,10 +72,6 @@ class SurfaceViewPreview {
         return mSurfaceView;
     }
 
-    Class getOutputClass() {
-        return SurfaceHolder.class;
-    }
-
     boolean isReady() {
         return getWidth() != 0 && getHeight() != 0;
     }
@@ -96,16 +87,16 @@ class SurfaceViewPreview {
     }
 
     void setSize(int width, int height) {
-        mWidth = width;
-        mHeight = height;
+        this.width = width;
+        this.height = height;
     }
 
     int getWidth() {
-        return mWidth;
+        return width;
     }
 
     int getHeight() {
-        return mHeight;
+        return height;
     }
 
     public interface Callback {

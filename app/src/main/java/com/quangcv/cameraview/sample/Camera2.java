@@ -35,6 +35,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
+import android.view.SurfaceHolder;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -417,7 +418,7 @@ class Camera2 extends BaseCamera {
             throw new IllegalStateException("Failed to get configuration map: " + mCameraId);
         }
         mPreviewSizes.clear();
-        for (android.util.Size size : map.getOutputSizes(mPreview.getOutputClass())) {
+        for (android.util.Size size : map.getOutputSizes(SurfaceHolder.class)) {
             int width = size.getWidth();
             int height = size.getHeight();
             if (width <= MAX_PREVIEW_WIDTH && height <= MAX_PREVIEW_HEIGHT) {
