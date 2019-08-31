@@ -197,7 +197,7 @@ class Camera2 extends BaseCamera {
 
     private int mDisplayOrientation;
 
-    public Camera2(SurfaceViewPreview preview, Context context) {
+    public Camera2(CameraView preview, Context context) {
         super(preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
         mPreview.setSurfaceCallback(new SurfaceCallback() {

@@ -7,16 +7,21 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
-import android.widget.FrameLayout;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 
 import com.quangcv.cameraview.R;
 
 import java.util.Set;
 
-public class CameraView extends FrameLayout {
+public class CameraView extends SurfaceView {
 
-    private final DisplayOrientationDetector mDisplayOrientationDetector;
+    private DisplayOrientationDetector mDisplayOrientationDetector;
     private BaseCamera mImpl;
+
+    private SurfaceCallback surfaceCallback;
+    private int mWidth;
+    private int mHeight;
 
     public CameraView(Context context) {
         this(context, null);
@@ -28,17 +33,35 @@ public class CameraView extends FrameLayout {
 
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        if (isInEditMode()) {
-            mDisplayOrientationDetector = null;
-            return;
-        }
 
-        SurfaceViewPreview preview = new SurfaceViewPreview(getContext());
-        addView(preview);
+        if (isInEditMode()) return;
+
+        SurfaceHolder holder = getHolder();
+        holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        holder.addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder h) {
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder h, int format, int width, int height) {
+                setSize(width, height);
+                if (!ViewCompat.isInLayout(CameraView.this)) {
+                    surfaceCallback.onSurfaceChanged();
+                }
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder h) {
+                setSize(0, 0);
+            }
+        });
+
+
         if (Build.VERSION.SDK_INT < 21) {
-            mImpl = new Camera1(preview);
+            mImpl = new Camera1(this);
         } else {
-            mImpl = new Camera2(preview, context);
+            mImpl = new Camera2(this, context);
         }
 
         TypedArray a = context.obtainStyledAttributes(attrs,
@@ -76,41 +99,12 @@ public class CameraView extends FrameLayout {
         }
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        if (isInEditMode()) return;
-
-        // Measure the TextureView
-        int width = getMeasuredWidth();
-        int height = getMeasuredHeight();
-        AspectRatio ratio = getAspectRatio();
-        if (mDisplayOrientationDetector.getLastKnownDisplayOrientation() % 180 == 0) {
-            ratio = ratio.inverse();
-        }
-        assert ratio != null;
-        if (height < width * ratio.getY() / ratio.getX()) {
-            mImpl.getView().measure(
-                    MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(width * ratio.getY() / ratio.getX(),
-                            MeasureSpec.EXACTLY));
-        } else {
-            mImpl.getView().measure(
-                    MeasureSpec.makeMeasureSpec(height * ratio.getX() / ratio.getY(),
-                            MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
-        }
-    }
-
     public void start() {
         if (!mImpl.start()) {
             // Fall back to Camera1
             // Camera2 uses legacy hardware layer
             CameraCallback c = mImpl.getCallback();
-            SurfaceViewPreview v = new SurfaceViewPreview(getContext());
-            addView(v);
-            mImpl = new Camera1(v);
+            mImpl = new Camera1(this);
             mImpl.setCallback(c);
             mImpl.start();
         }
@@ -167,5 +161,34 @@ public class CameraView extends FrameLayout {
 
     public void setCallback(@NonNull CameraCallback callback) {
         mImpl.setCallback(callback);
+    }
+
+
+    // ==== surfaceview preview
+    void setSurfaceCallback(SurfaceCallback callback) {
+        surfaceCallback = callback;
+    }
+
+    void setSize(int width, int height) {
+        this.mWidth = width;
+        this.mHeight = height;
+    }
+
+    int getViewWidth() {
+        return mWidth;
+    }
+
+    int getViewHeight() {
+        return mHeight;
+    }
+
+    boolean isReady() {
+        return mWidth != 0 && mHeight != 0;
+    }
+
+    void setDisplayOrientation(int displayOrientation) {
+    }
+
+    void setBufferSize(int width, int height) {
     }
 }

@@ -24,9 +24,9 @@ abstract class BaseCamera {
 
     protected CameraCallback callback;
 
-    protected final SurfaceViewPreview mPreview;
+    protected final CameraView mPreview;
 
-    BaseCamera(SurfaceViewPreview preview) {
+    BaseCamera(CameraView preview) {
         mPreview = preview;
     }
 

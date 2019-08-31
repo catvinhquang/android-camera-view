@@ -50,7 +50,7 @@ class Camera1 extends BaseCamera {
 
     private int mDisplayOrientation;
 
-    public Camera1(SurfaceViewPreview preview) {
+    public Camera1(CameraView preview) {
         super(preview);
         preview.setSurfaceCallback(new SurfaceCallback() {
             @Override
