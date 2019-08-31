@@ -26,9 +26,15 @@ import android.view.ViewGroup;
 
 import com.quangcv.cameraview.R;
 
-class SurfaceViewPreview extends PreviewImpl {
+class SurfaceViewPreview {
 
     final SurfaceView mSurfaceView;
+
+    private Callback mCallback;
+
+    private int mWidth;
+
+    private int mHeight;
 
     SurfaceViewPreview(Context context, ViewGroup parent) {
         final View view = View.inflate(context, R.layout.surface_view, parent);
@@ -55,33 +61,55 @@ class SurfaceViewPreview extends PreviewImpl {
         });
     }
 
-    @Override
+    void setCallback(Callback callback) {
+        mCallback = callback;
+    }
+
     Surface getSurface() {
         return getSurfaceHolder().getSurface();
     }
 
-    @Override
     SurfaceHolder getSurfaceHolder() {
         return mSurfaceView.getHolder();
     }
 
-    @Override
     View getView() {
         return mSurfaceView;
     }
 
-    @Override
     Class getOutputClass() {
         return SurfaceHolder.class;
     }
 
-    @Override
+    boolean isReady() {
+        return getWidth() != 0 && getHeight() != 0;
+    }
+
+    protected void dispatchSurfaceChanged() {
+        mCallback.onSurfaceChanged();
+    }
+
     void setDisplayOrientation(int displayOrientation) {
     }
 
-    @Override
-    boolean isReady() {
-        return getWidth() != 0 && getHeight() != 0;
+    void setBufferSize(int width, int height) {
+    }
+
+    void setSize(int width, int height) {
+        mWidth = width;
+        mHeight = height;
+    }
+
+    int getWidth() {
+        return mWidth;
+    }
+
+    int getHeight() {
+        return mHeight;
+    }
+
+    public interface Callback {
+        void onSurfaceChanged();
     }
 
 }

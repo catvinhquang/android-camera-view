@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 @TargetApi(21)
-class Camera2 extends CameraViewImpl {
+class Camera2 extends BaseCamera {
 
     private static final String TAG = "Camera2";
 
@@ -196,10 +196,10 @@ class Camera2 extends CameraViewImpl {
 
     private int mDisplayOrientation;
 
-    Camera2(PreviewImpl preview, Context context) {
+    public Camera2(SurfaceViewPreview preview, Context context) {
         super(preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        mPreview.setCallback(new PreviewImpl.Callback() {
+        mPreview.setCallback(new SurfaceViewPreview.Callback() {
             @Override
             public void onSurfaceChanged() {
                 startCaptureSession();

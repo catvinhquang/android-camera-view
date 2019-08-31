@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class Camera1 extends CameraViewImpl {
+class Camera1 extends BaseCamera {
 
     private static final int INVALID_CAMERA_ID = -1;
 
@@ -50,9 +50,9 @@ class Camera1 extends CameraViewImpl {
 
     private int mDisplayOrientation;
 
-    Camera1(PreviewImpl preview) {
+    public Camera1(SurfaceViewPreview preview) {
         super(preview);
-        preview.setCallback(new PreviewImpl.Callback() {
+        preview.setCallback(new SurfaceViewPreview.Callback() {
             @Override
             public void onSurfaceChanged() {
                 if (mCamera != null) {

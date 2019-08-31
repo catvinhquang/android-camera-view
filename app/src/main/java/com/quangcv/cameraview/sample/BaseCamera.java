@@ -20,13 +20,13 @@ import android.view.View;
 
 import java.util.Set;
 
-abstract class CameraViewImpl {
+abstract class BaseCamera {
 
     protected CameraCallback callback;
 
-    protected final PreviewImpl mPreview;
+    protected final SurfaceViewPreview mPreview;
 
-    CameraViewImpl(PreviewImpl preview) {
+    BaseCamera(SurfaceViewPreview preview) {
         mPreview = preview;
     }
 

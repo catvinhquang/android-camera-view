@@ -3,7 +3,6 @@ package com.quangcv.cameraview.sample;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
@@ -17,7 +16,7 @@ import java.util.Set;
 public class CameraView extends FrameLayout {
 
     private final DisplayOrientationDetector mDisplayOrientationDetector;
-    private CameraViewImpl mImpl;
+    private BaseCamera mImpl;
 
     public CameraView(Context context) {
         this(context, null);
@@ -34,7 +33,7 @@ public class CameraView extends FrameLayout {
             return;
         }
 
-        PreviewImpl preview = createPreviewImpl(context);
+        SurfaceViewPreview preview = createPreviewImpl(context);
         if (Build.VERSION.SDK_INT < 21) {
             mImpl = new Camera1(preview);
         } else {
@@ -61,7 +60,7 @@ public class CameraView extends FrameLayout {
     }
 
     @NonNull
-    private PreviewImpl createPreviewImpl(Context context) {
+    private SurfaceViewPreview createPreviewImpl(Context context) {
         return new SurfaceViewPreview(context, this);
     }
 
@@ -75,10 +74,10 @@ public class CameraView extends FrameLayout {
 
     @Override
     protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
         if (!isInEditMode()) {
             mDisplayOrientationDetector.disable();
         }
-        super.onDetachedFromWindow();
     }
 
     @Override
@@ -123,8 +122,8 @@ public class CameraView extends FrameLayout {
         mImpl.stop();
     }
 
-    public void setCallback(@NonNull CameraCallback callback) {
-        mImpl.setCallback(callback);
+    public void takePicture() {
+        mImpl.takePicture();
     }
 
     public void setFacing(@Constants.Facing int facing) {
@@ -136,51 +135,25 @@ public class CameraView extends FrameLayout {
         return mImpl.getFacing();
     }
 
-    /**
-     * Gets all the aspect ratios supported by the current camera.
-     */
     public Set<AspectRatio> getSupportedAspectRatios() {
         return mImpl.getSupportedAspectRatios();
     }
 
-    /**
-     * Sets the aspect ratio of camera.
-     *
-     * @param ratio The {@link AspectRatio} to be set.
-     */
     public void setAspectRatio(@NonNull AspectRatio ratio) {
         if (mImpl.setAspectRatio(ratio)) {
             requestLayout();
         }
     }
 
-    /**
-     * Gets the current aspect ratio of camera.
-     *
-     * @return The current {@link AspectRatio}. Can be {@code null} if no camera is opened yet.
-     */
     @Nullable
     public AspectRatio getAspectRatio() {
         return mImpl.getAspectRatio();
     }
 
-    /**
-     * Enables or disables the continuous auto-focus mode. When the current camera doesn't support
-     * auto-focus, calling this method will be ignored.
-     *
-     * @param autoFocus {@code true} to enable continuous auto-focus mode. {@code false} to
-     *                  disable it.
-     */
     public void setAutoFocus(boolean autoFocus) {
         mImpl.setAutoFocus(autoFocus);
     }
 
-    /**
-     * Returns whether the continuous auto-focus mode is enabled.
-     *
-     * @return {@code true} if the continuous auto-focus mode is enabled. {@code false} if it is
-     * disabled, or if it is not supported by the current camera.
-     */
     public boolean getAutoFocus() {
         return mImpl.getAutoFocus();
     }
@@ -194,8 +167,7 @@ public class CameraView extends FrameLayout {
         return mImpl.getFlash();
     }
 
-    public void takePicture() {
-        mImpl.takePicture();
+    public void setCallback(@NonNull CameraCallback callback) {
+        mImpl.setCallback(callback);
     }
-
 }
