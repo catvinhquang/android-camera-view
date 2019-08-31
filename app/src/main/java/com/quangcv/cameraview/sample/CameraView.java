@@ -3,7 +3,6 @@ package com.quangcv.cameraview.sample;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
-import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -22,7 +21,6 @@ public class CameraView extends FrameLayout {
     private final DisplayOrientationDetector mDisplayOrientationDetector;
 
     private CameraViewImpl mImpl;
-    private boolean mAdjustViewBounds;
 
     public CameraView(Context context) {
         this(context, null);
@@ -40,7 +38,7 @@ public class CameraView extends FrameLayout {
             return;
         }
 
-        final PreviewImpl preview = createPreviewImpl(context);
+        PreviewImpl preview = createPreviewImpl(context);
         mCallbacks = new CallbackBridge();
         if (Build.VERSION.SDK_INT < 21) {
             mImpl = new Camera1(mCallbacks, preview);
@@ -52,7 +50,6 @@ public class CameraView extends FrameLayout {
                 R.styleable.CameraView,
                 defStyleAttr,
                 R.style.Widget_CameraView);
-        mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, false);
         String aspectRatio = a.getString(R.styleable.CameraView_aspectRatio);
         setAspectRatio(aspectRatio != null ? AspectRatio.parse(aspectRatio) : Constants.DEFAULT_ASPECT_RATIO);
         setFacing(a.getInt(R.styleable.CameraView_facing, Constants.Facing.FACING_BACK));
@@ -91,43 +88,10 @@ public class CameraView extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (isInEditMode()) {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            return;
-        }
-        // Handle android:adjustViewBounds
-        if (mAdjustViewBounds) {
-            if (!isCameraOpened()) {
-                mCallbacks.reserveRequestLayoutOnOpen();
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-                return;
-            }
-            final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-            final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-            if (widthMode == MeasureSpec.EXACTLY && heightMode != MeasureSpec.EXACTLY) {
-                final AspectRatio ratio = getAspectRatio();
-                assert ratio != null;
-                int height = (int) (MeasureSpec.getSize(widthMeasureSpec) * ratio.toFloat());
-                if (heightMode == MeasureSpec.AT_MOST) {
-                    height = Math.min(height, MeasureSpec.getSize(heightMeasureSpec));
-                }
-                super.onMeasure(widthMeasureSpec,
-                        MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
-            } else if (widthMode != MeasureSpec.EXACTLY && heightMode == MeasureSpec.EXACTLY) {
-                final AspectRatio ratio = getAspectRatio();
-                assert ratio != null;
-                int width = (int) (MeasureSpec.getSize(heightMeasureSpec) * ratio.toFloat());
-                if (widthMode == MeasureSpec.AT_MOST) {
-                    width = Math.min(width, MeasureSpec.getSize(widthMeasureSpec));
-                }
-                super.onMeasure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                        heightMeasureSpec);
-            } else {
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
-        } else {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        if (isInEditMode()) return;
+
         // Measure the TextureView
         int width = getMeasuredWidth();
         int height = getMeasuredHeight();
@@ -149,30 +113,6 @@ public class CameraView extends FrameLayout {
         }
     }
 
-    @Override
-    protected Parcelable onSaveInstanceState() {
-        SavedState state = new SavedState(super.onSaveInstanceState());
-        state.facing = getFacing();
-        state.ratio = getAspectRatio();
-        state.autoFocus = getAutoFocus();
-        state.flash = getFlash();
-        return state;
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Parcelable state) {
-        if (!(state instanceof SavedState)) {
-            super.onRestoreInstanceState(state);
-            return;
-        }
-        SavedState ss = (SavedState) state;
-        super.onRestoreInstanceState(ss.getSuperState());
-        setFacing(ss.facing);
-        setAspectRatio(ss.ratio);
-        setAutoFocus(ss.autoFocus);
-        setFlash(ss.flash);
-    }
-
     public void start() {
         if (!mImpl.start()) {
             // Fall back to Camera1
@@ -189,9 +129,6 @@ public class CameraView extends FrameLayout {
         mImpl.stop();
     }
 
-    /**
-     * @return {@code true} if the camera is opened.
-     */
     public boolean isCameraOpened() {
         return mImpl.isCameraOpened();
     }
@@ -202,27 +139,6 @@ public class CameraView extends FrameLayout {
 
     public void removeCallback(@NonNull Callback callback) {
         mCallbacks.remove(callback);
-    }
-
-    /**
-     * @param adjustViewBounds {@code true} if you want the CameraView to adjust its bounds to
-     *                         preserve the aspect ratio of camera.
-     * @see #getAdjustViewBounds()
-     */
-    public void setAdjustViewBounds(boolean adjustViewBounds) {
-        if (mAdjustViewBounds != adjustViewBounds) {
-            mAdjustViewBounds = adjustViewBounds;
-            requestLayout();
-        }
-    }
-
-    /**
-     * @return True when this CameraView is adjusting its bounds to preserve the aspect ratio of
-     * camera.
-     * @see #setAdjustViewBounds(boolean)
-     */
-    public boolean getAdjustViewBounds() {
-        return mAdjustViewBounds;
     }
 
     public void setFacing(@Constants.Facing int facing) {
@@ -347,71 +263,13 @@ public class CameraView extends FrameLayout {
         }
     }
 
-    protected static class SavedState extends BaseSavedState {
+    public interface Callback {
 
-        @Constants.Facing
-        int facing;
+        void onCameraOpened(CameraView cameraView);
 
-        AspectRatio ratio;
+        void onCameraClosed(CameraView cameraView);
 
-        boolean autoFocus;
-
-        @Constants.Flash
-        int flash;
-
-        SavedState(Parcel source, ClassLoader loader) {
-            super(source);
-            facing = source.readInt();
-            ratio = source.readParcelable(loader);
-            autoFocus = source.readByte() != 0;
-            flash = source.readInt();
-        }
-
-        SavedState(Parcelable superState) {
-            super(superState);
-        }
-
-        @Override
-        public void writeToParcel(Parcel out, int flags) {
-            super.writeToParcel(out, flags);
-            out.writeInt(facing);
-            out.writeParcelable(ratio, 0);
-            out.writeByte((byte) (autoFocus ? 1 : 0));
-            out.writeInt(flash);
-        }
-
-        public static final Parcelable.Creator<SavedState> CREATOR
-                = new Parcelable.ClassLoaderCreator<SavedState>() {
-
-            @Override
-            public SavedState createFromParcel(Parcel in) {
-                return createFromParcel(in, null);
-            }
-
-            @Override
-            public SavedState createFromParcel(Parcel in, ClassLoader loader) {
-                return new SavedState(in, loader);
-            }
-
-            @Override
-            public SavedState[] newArray(int size) {
-                return new SavedState[size];
-            }
-
-        };
-
-    }
-
-    public abstract static class Callback {
-
-        public void onCameraOpened(CameraView cameraView) {
-        }
-
-        public void onCameraClosed(CameraView cameraView) {
-        }
-
-        public void onPictureTaken(CameraView cameraView, byte[] data) {
-        }
+        void onPictureTaken(CameraView cameraView, byte[] data);
 
     }
 
