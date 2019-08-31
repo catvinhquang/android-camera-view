@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.quangcv.cameraview.sample;
 
 import android.annotation.SuppressLint;
@@ -28,8 +12,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
-@SuppressWarnings("deprecation")
 class Camera1 extends CameraViewImpl {
 
     private static final int INVALID_CAMERA_ID = -1;
@@ -37,11 +19,11 @@ class Camera1 extends CameraViewImpl {
     private static final SparseArrayCompat<String> FLASH_MODES = new SparseArrayCompat<>();
 
     static {
-        FLASH_MODES.put(Constants.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
-        FLASH_MODES.put(Constants.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
-        FLASH_MODES.put(Constants.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
-        FLASH_MODES.put(Constants.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
-        FLASH_MODES.put(Constants.FLASH_RED_EYE, Camera.Parameters.FLASH_MODE_RED_EYE);
+        FLASH_MODES.put(Constants.Flash.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
+        FLASH_MODES.put(Constants.Flash.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
+        FLASH_MODES.put(Constants.Flash.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
+        FLASH_MODES.put(Constants.Flash.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
+        FLASH_MODES.put(Constants.Flash.FLASH_RED_EYE, Camera.Parameters.FLASH_MODE_RED_EYE);
     }
 
     private int mCameraId;
@@ -108,11 +90,7 @@ class Camera1 extends CameraViewImpl {
     @SuppressLint("NewApi")
     void setUpPreview() {
         try {
-            if (mPreview.getOutputClass() == SurfaceHolder.class) {
-                mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
-            } else {
-                mCamera.setPreviewTexture((SurfaceTexture) mPreview.getSurfaceTexture());
-            }
+            mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -452,7 +430,7 @@ class Camera1 extends CameraViewImpl {
             String currentMode = FLASH_MODES.get(mFlash);
             if (modes == null || !modes.contains(currentMode)) {
                 mCameraParameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-                mFlash = Constants.FLASH_OFF;
+                mFlash = Constants.Flash.FLASH_OFF;
                 return true;
             }
             return false;

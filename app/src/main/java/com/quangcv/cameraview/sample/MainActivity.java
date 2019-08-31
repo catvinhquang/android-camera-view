@@ -66,9 +66,9 @@ public class MainActivity extends AppCompatActivity implements
     private static final String FRAGMENT_DIALOG = "dialog";
 
     private static final int[] FLASH_OPTIONS = {
-            CameraView.FLASH_AUTO,
-            CameraView.FLASH_OFF,
-            CameraView.FLASH_ON,
+            Constants.Flash.FLASH_AUTO,
+            Constants.Flash.FLASH_OFF,
+            Constants.Flash.FLASH_ON,
     };
 
     private static final int[] FLASH_ICONS = {
@@ -208,8 +208,8 @@ public class MainActivity extends AppCompatActivity implements
             case R.id.switch_camera:
                 if (mCameraView != null) {
                     int facing = mCameraView.getFacing();
-                    mCameraView.setFacing(facing == CameraView.FACING_FRONT ?
-                            CameraView.FACING_BACK : CameraView.FACING_FRONT);
+                    mCameraView.setFacing(facing == Constants.Facing.FACING_FRONT ?
+                            Constants.Facing.FACING_BACK : Constants.Facing.FACING_FRONT);
                 }
                 return true;
         }

@@ -41,7 +41,6 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedSet;
 
-@SuppressWarnings("MissingPermission")
 @TargetApi(21)
 class Camera2 extends CameraViewImpl {
 
@@ -50,8 +49,8 @@ class Camera2 extends CameraViewImpl {
     private static final SparseIntArray INTERNAL_FACINGS = new SparseIntArray();
 
     static {
-        INTERNAL_FACINGS.put(Constants.FACING_BACK, CameraCharacteristics.LENS_FACING_BACK);
-        INTERNAL_FACINGS.put(Constants.FACING_FRONT, CameraCharacteristics.LENS_FACING_FRONT);
+        INTERNAL_FACINGS.put(Constants.Facing.FACING_BACK, CameraCharacteristics.LENS_FACING_BACK);
+        INTERNAL_FACINGS.put(Constants.Facing.FACING_FRONT, CameraCharacteristics.LENS_FACING_FRONT);
     }
 
     /**
@@ -399,7 +398,7 @@ class Camera2 extends CameraViewImpl {
             }
             // The operation can reach here when the only camera device is an external one.
             // We treat it as facing back.
-            mFacing = Constants.FACING_BACK;
+            mFacing = Constants.Facing.FACING_BACK;
             return true;
         } catch (CameraAccessException e) {
             throw new RuntimeException("Failed to get a list of camera devices", e);
@@ -556,31 +555,31 @@ class Camera2 extends CameraViewImpl {
      */
     void updateFlash() {
         switch (mFlash) {
-            case Constants.FLASH_OFF:
+            case Constants.Flash.FLASH_OFF:
                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                         CaptureRequest.CONTROL_AE_MODE_ON);
                 mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
                         CaptureRequest.FLASH_MODE_OFF);
                 break;
-            case Constants.FLASH_ON:
+            case Constants.Flash.FLASH_ON:
                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                         CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
                 mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
                         CaptureRequest.FLASH_MODE_OFF);
                 break;
-            case Constants.FLASH_TORCH:
+            case Constants.Flash.FLASH_TORCH:
                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                         CaptureRequest.CONTROL_AE_MODE_ON);
                 mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
                         CaptureRequest.FLASH_MODE_TORCH);
                 break;
-            case Constants.FLASH_AUTO:
+            case Constants.Flash.FLASH_AUTO:
                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                         CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
                 mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
                         CaptureRequest.FLASH_MODE_OFF);
                 break;
-            case Constants.FLASH_RED_EYE:
+            case Constants.Flash.FLASH_RED_EYE:
                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                         CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
                 mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
@@ -614,27 +613,27 @@ class Camera2 extends CameraViewImpl {
             captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                     mPreviewRequestBuilder.get(CaptureRequest.CONTROL_AF_MODE));
             switch (mFlash) {
-                case Constants.FLASH_OFF:
+                case Constants.Flash.FLASH_OFF:
                     captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                             CaptureRequest.CONTROL_AE_MODE_ON);
                     captureRequestBuilder.set(CaptureRequest.FLASH_MODE,
                             CaptureRequest.FLASH_MODE_OFF);
                     break;
-                case Constants.FLASH_ON:
+                case Constants.Flash.FLASH_ON:
                     captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                             CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
                     break;
-                case Constants.FLASH_TORCH:
+                case Constants.Flash.FLASH_TORCH:
                     captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                             CaptureRequest.CONTROL_AE_MODE_ON);
                     captureRequestBuilder.set(CaptureRequest.FLASH_MODE,
                             CaptureRequest.FLASH_MODE_TORCH);
                     break;
-                case Constants.FLASH_AUTO:
+                case Constants.Flash.FLASH_AUTO:
                     captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                             CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
                     break;
-                case Constants.FLASH_RED_EYE:
+                case Constants.Flash.FLASH_RED_EYE:
                     captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                             CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
                     break;
@@ -645,7 +644,7 @@ class Camera2 extends CameraViewImpl {
                     CameraCharacteristics.SENSOR_ORIENTATION);
             captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,
                     (sensorOrientation +
-                            mDisplayOrientation * (mFacing == Constants.FACING_FRONT ? 1 : -1) +
+                            mDisplayOrientation * (mFacing == Constants.Facing.FACING_FRONT ? 1 : -1) +
                             360) % 360);
             // Stop preview and capture a still picture.
             mCaptureSession.stopRepeating();

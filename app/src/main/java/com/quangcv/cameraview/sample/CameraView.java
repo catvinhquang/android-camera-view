@@ -1,28 +1,10 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.quangcv.cameraview.sample;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
@@ -31,52 +13,16 @@ import android.widget.FrameLayout;
 
 import com.quangcv.cameraview.R;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Set;
 
 public class CameraView extends FrameLayout {
 
-    /** The camera device faces the opposite direction as the device's screen. */
-    public static final int FACING_BACK = Constants.FACING_BACK;
-
-    /** The camera device faces the same direction as the device's screen. */
-    public static final int FACING_FRONT = Constants.FACING_FRONT;
-
-    /** Direction the camera faces relative to device screen. */
-    @IntDef({FACING_BACK, FACING_FRONT})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface Facing {
-    }
-
-    /** Flash will not be fired. */
-    public static final int FLASH_OFF = Constants.FLASH_OFF;
-
-    /** Flash will always be fired during snapshot. */
-    public static final int FLASH_ON = Constants.FLASH_ON;
-
-    /** Constant emission of light during preview, auto-focus and snapshot. */
-    public static final int FLASH_TORCH = Constants.FLASH_TORCH;
-
-    /** Flash will be fired automatically when required. */
-    public static final int FLASH_AUTO = Constants.FLASH_AUTO;
-
-    /** Flash will be fired in red-eye reduction mode. */
-    public static final int FLASH_RED_EYE = Constants.FLASH_RED_EYE;
-
-    /** The mode for for the camera device's flash control */
-    @IntDef({FLASH_OFF, FLASH_ON, FLASH_TORCH, FLASH_AUTO, FLASH_RED_EYE})
-    public @interface Flash {
-    }
-
-    CameraViewImpl mImpl;
-
     private final CallbackBridge mCallbacks;
-
-    private boolean mAdjustViewBounds;
-
     private final DisplayOrientationDetector mDisplayOrientationDetector;
+
+    private CameraViewImpl mImpl;
+    private boolean mAdjustViewBounds;
 
     public CameraView(Context context) {
         this(context, null);
@@ -86,7 +32,6 @@ public class CameraView extends FrameLayout {
         this(context, attrs, 0);
     }
 
-    @SuppressWarnings("WrongConstant")
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         if (isInEditMode()) {
@@ -94,7 +39,7 @@ public class CameraView extends FrameLayout {
             mDisplayOrientationDetector = null;
             return;
         }
-        // Internal setup
+
         final PreviewImpl preview = createPreviewImpl(context);
         mCallbacks = new CallbackBridge();
         if (Build.VERSION.SDK_INT < 21) {
@@ -102,21 +47,19 @@ public class CameraView extends FrameLayout {
         } else {
             mImpl = new Camera2(mCallbacks, preview, context);
         }
-        // Attributes
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView, defStyleAttr,
+
+        TypedArray a = context.obtainStyledAttributes(attrs,
+                R.styleable.CameraView,
+                defStyleAttr,
                 R.style.Widget_CameraView);
         mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, false);
-        setFacing(a.getInt(R.styleable.CameraView_facing, FACING_BACK));
         String aspectRatio = a.getString(R.styleable.CameraView_aspectRatio);
-        if (aspectRatio != null) {
-            setAspectRatio(AspectRatio.parse(aspectRatio));
-        } else {
-            setAspectRatio(Constants.DEFAULT_ASPECT_RATIO);
-        }
+        setAspectRatio(aspectRatio != null ? AspectRatio.parse(aspectRatio) : Constants.DEFAULT_ASPECT_RATIO);
+        setFacing(a.getInt(R.styleable.CameraView_facing, Constants.Facing.FACING_BACK));
         setAutoFocus(a.getBoolean(R.styleable.CameraView_autoFocus, true));
-        setFlash(a.getInt(R.styleable.CameraView_flash, Constants.FLASH_AUTO));
+        setFlash(a.getInt(R.styleable.CameraView_flash, Constants.Flash.FLASH_AUTO));
         a.recycle();
-        // Display orientation detector
+
         mDisplayOrientationDetector = new DisplayOrientationDetector(context) {
             @Override
             public void onDisplayOrientationChanged(int displayOrientation) {
@@ -127,13 +70,7 @@ public class CameraView extends FrameLayout {
 
     @NonNull
     private PreviewImpl createPreviewImpl(Context context) {
-        PreviewImpl preview;
-        if (Build.VERSION.SDK_INT >= 23) {
-            preview = new SurfaceViewPreview(context, this);
-        } else {
-            preview = new TextureViewPreview(context, this);
-        }
-        return preview;
+        return new SurfaceViewPreview(context, this);
     }
 
     @Override
@@ -236,25 +173,18 @@ public class CameraView extends FrameLayout {
         setFlash(ss.flash);
     }
 
-    /**
-     * Open a camera device and start showing camera preview. This is typically called from
-     * {@link Activity#onResume()}.
-     */
     public void start() {
         if (!mImpl.start()) {
-            //store the state ,and restore this state after fall back o Camera1
+            // Fall back to Camera1
+            // Camera2 uses legacy hardware layer
+
             Parcelable state = onSaveInstanceState();
-            // Camera2 uses legacy hardware layer; fall back to Camera1
             mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
             onRestoreInstanceState(state);
             mImpl.start();
         }
     }
 
-    /**
-     * Stop camera preview and close the device. This is typically called from
-     * {@link Activity#onPause()}.
-     */
     public void stop() {
         mImpl.stop();
     }
@@ -266,22 +196,10 @@ public class CameraView extends FrameLayout {
         return mImpl.isCameraOpened();
     }
 
-    /**
-     * Add a new callback.
-     *
-     * @param callback The {@link Callback} to add.
-     * @see #removeCallback(Callback)
-     */
     public void addCallback(@NonNull Callback callback) {
         mCallbacks.add(callback);
     }
 
-    /**
-     * Remove a callback.
-     *
-     * @param callback The {@link Callback} to remove.
-     * @see #addCallback(Callback)
-     */
     public void removeCallback(@NonNull Callback callback) {
         mCallbacks.remove(callback);
     }
@@ -307,24 +225,12 @@ public class CameraView extends FrameLayout {
         return mAdjustViewBounds;
     }
 
-    /**
-     * Chooses camera by the direction it faces.
-     *
-     * @param facing The camera facing. Must be either {@link #FACING_BACK} or
-     *               {@link #FACING_FRONT}.
-     */
-    public void setFacing(@Facing int facing) {
+    public void setFacing(@Constants.Facing int facing) {
         mImpl.setFacing(facing);
     }
 
-    /**
-     * Gets the direction that the current camera faces.
-     *
-     * @return The camera facing.
-     */
-    @Facing
+    @Constants.Facing
     public int getFacing() {
-        //noinspection WrongConstant
         return mImpl.getFacing();
     }
 
@@ -377,23 +283,12 @@ public class CameraView extends FrameLayout {
         return mImpl.getAutoFocus();
     }
 
-    /**
-     * Sets the flash mode.
-     *
-     * @param flash The desired flash mode.
-     */
-    public void setFlash(@Flash int flash) {
+    public void setFlash(@Constants.Flash int flash) {
         mImpl.setFlash(flash);
     }
 
-    /**
-     * Gets the current flash mode.
-     *
-     * @return The current flash mode.
-     */
-    @Flash
+    @Constants.Flash
     public int getFlash() {
-        //noinspection WrongConstant
         return mImpl.getFlash();
     }
 
@@ -454,18 +349,17 @@ public class CameraView extends FrameLayout {
 
     protected static class SavedState extends BaseSavedState {
 
-        @Facing
+        @Constants.Facing
         int facing;
 
         AspectRatio ratio;
 
         boolean autoFocus;
 
-        @Flash
+        @Constants.Flash
         int flash;
 
-        @SuppressWarnings("WrongConstant")
-        public SavedState(Parcel source, ClassLoader loader) {
+        SavedState(Parcel source, ClassLoader loader) {
             super(source);
             facing = source.readInt();
             ratio = source.readParcelable(loader);
@@ -473,7 +367,7 @@ public class CameraView extends FrameLayout {
             flash = source.readInt();
         }
 
-        public SavedState(Parcelable superState) {
+        SavedState(Parcelable superState) {
             super(superState);
         }
 
@@ -508,36 +402,17 @@ public class CameraView extends FrameLayout {
 
     }
 
-    /**
-     * Callback for monitoring events about {@link CameraView}.
-     */
-    @SuppressWarnings("UnusedParameters")
     public abstract static class Callback {
 
-        /**
-         * Called when camera is opened.
-         *
-         * @param cameraView The associated {@link CameraView}.
-         */
         public void onCameraOpened(CameraView cameraView) {
         }
 
-        /**
-         * Called when camera is closed.
-         *
-         * @param cameraView The associated {@link CameraView}.
-         */
         public void onCameraClosed(CameraView cameraView) {
         }
 
-        /**
-         * Called when a picture is taken.
-         *
-         * @param cameraView The associated {@link CameraView}.
-         * @param data       JPEG data.
-         */
         public void onPictureTaken(CameraView cameraView, byte[] data) {
         }
+
     }
 
 }
