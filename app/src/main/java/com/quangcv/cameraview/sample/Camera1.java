@@ -52,7 +52,7 @@ class Camera1 extends BaseCamera {
 
     public Camera1(SurfaceViewPreview preview) {
         super(preview);
-        preview.setCallback(new SurfaceViewPreview.Callback() {
+        preview.setSurfaceCallback(new SurfaceViewPreview.Callback() {
             @Override
             public void onSurfaceChanged() {
                 if (mCamera != null) {
@@ -88,7 +88,7 @@ class Camera1 extends BaseCamera {
     @SuppressLint("NewApi")
     void setUpPreview() {
         try {
-            mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
+            mCamera.setPreviewDisplay(mPreview.getHolder());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -313,8 +313,8 @@ class Camera1 extends BaseCamera {
         }
         int desiredWidth;
         int desiredHeight;
-        final int surfaceWidth = mPreview.getWidth();
-        final int surfaceHeight = mPreview.getHeight();
+        final int surfaceWidth = mPreview.getViewWidth();
+        final int surfaceHeight = mPreview.getViewHeight();
         if (isLandscape(mDisplayOrientation)) {
             desiredWidth = surfaceHeight;
             desiredHeight = surfaceWidth;

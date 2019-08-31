@@ -200,7 +200,7 @@ class Camera2 extends BaseCamera {
     public Camera2(SurfaceViewPreview preview, Context context) {
         super(preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        mPreview.setCallback(new SurfaceViewPreview.Callback() {
+        mPreview.setSurfaceCallback(new SurfaceViewPreview.Callback() {
             @Override
             public void onSurfaceChanged() {
                 startCaptureSession();
@@ -489,7 +489,7 @@ class Camera2 extends BaseCamera {
         }
         Size previewSize = chooseOptimalSize();
         mPreview.setBufferSize(previewSize.getWidth(), previewSize.getHeight());
-        Surface surface = mPreview.getSurface();
+        Surface surface = mPreview.getHolder().getSurface();
         try {
             mPreviewRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
@@ -507,8 +507,8 @@ class Camera2 extends BaseCamera {
      */
     private Size chooseOptimalSize() {
         int surfaceLonger, surfaceShorter;
-        final int surfaceWidth = mPreview.getWidth();
-        final int surfaceHeight = mPreview.getHeight();
+        final int surfaceWidth = mPreview.getViewWidth();
+        final int surfaceHeight = mPreview.getViewHeight();
         if (surfaceWidth < surfaceHeight) {
             surfaceLonger = surfaceHeight;
             surfaceShorter = surfaceWidth;

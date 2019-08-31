@@ -1,40 +1,29 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.quangcv.cameraview.sample;
 
+import android.content.Context;
 import android.support.v4.view.ViewCompat;
-import android.view.Surface;
+import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.ViewGroup;
 
-class SurfaceViewPreview {
+class SurfaceViewPreview extends SurfaceView {
 
-    private SurfaceView mSurfaceView;
     private Callback mCallback;
-    private int width;
-    private int height;
+    private int mWidth;
+    private int mHeight;
 
-    SurfaceViewPreview(ViewGroup parent) {
-        mSurfaceView = new SurfaceView(parent.getContext());
-        parent.addView(mSurfaceView);
+    public SurfaceViewPreview(Context context) {
+        this(context, null);
+    }
 
-        final SurfaceHolder holder = mSurfaceView.getHolder();
+    public SurfaceViewPreview(Context context, AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
+
+    public SurfaceViewPreview(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+
+        SurfaceHolder holder = getHolder();
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -44,7 +33,7 @@ class SurfaceViewPreview {
             @Override
             public void surfaceChanged(SurfaceHolder h, int format, int width, int height) {
                 setSize(width, height);
-                if (!ViewCompat.isInLayout(mSurfaceView)) {
+                if (!ViewCompat.isInLayout(SurfaceViewPreview.this)) {
                     dispatchSurfaceChanged();
                 }
             }
@@ -56,51 +45,39 @@ class SurfaceViewPreview {
         });
     }
 
-    void setCallback(Callback callback) {
+    void setSurfaceCallback(Callback callback) {
         mCallback = callback;
     }
 
-    Surface getSurface() {
-        return getSurfaceHolder().getSurface();
+    void dispatchSurfaceChanged() {
+        mCallback.onSurfaceChanged();
     }
 
-    SurfaceHolder getSurfaceHolder() {
-        return mSurfaceView.getHolder();
+    void setSize(int width, int height) {
+        this.mWidth = width;
+        this.mHeight = height;
     }
 
-    View getView() {
-        return mSurfaceView;
+    int getViewWidth() {
+        return mWidth;
+    }
+
+    int getViewHeight() {
+        return mHeight;
     }
 
     boolean isReady() {
-        return getWidth() != 0 && getHeight() != 0;
+        return mWidth != 0 && mHeight != 0;
     }
 
-    protected void dispatchSurfaceChanged() {
-        mCallback.onSurfaceChanged();
+    public interface Callback {
+        void onSurfaceChanged();
     }
 
     void setDisplayOrientation(int displayOrientation) {
     }
 
     void setBufferSize(int width, int height) {
-    }
-
-    void setSize(int width, int height) {
-        this.width = width;
-        this.height = height;
-    }
-
-    int getWidth() {
-        return width;
-    }
-
-    int getHeight() {
-        return height;
-    }
-
-    public interface Callback {
-        void onSurfaceChanged();
     }
 
 }

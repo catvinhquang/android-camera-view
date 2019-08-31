@@ -31,7 +31,7 @@ abstract class BaseCamera {
     }
 
     View getView() {
-        return mPreview.getView();
+        return mPreview;
     }
 
     public void setCallback(CameraCallback callback) {

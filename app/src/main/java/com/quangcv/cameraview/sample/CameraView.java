@@ -33,7 +33,8 @@ public class CameraView extends FrameLayout {
             return;
         }
 
-        SurfaceViewPreview preview = new SurfaceViewPreview(this);
+        SurfaceViewPreview preview = new SurfaceViewPreview(getContext());
+        addView(preview);
         if (Build.VERSION.SDK_INT < 21) {
             mImpl = new Camera1(preview);
         } else {
@@ -107,7 +108,9 @@ public class CameraView extends FrameLayout {
             // Fall back to Camera1
             // Camera2 uses legacy hardware layer
             CameraCallback c = mImpl.getCallback();
-            mImpl = new Camera1(new SurfaceViewPreview(this));
+            SurfaceViewPreview v = new SurfaceViewPreview(getContext());
+            addView(v);
+            mImpl = new Camera1(v);
             mImpl.setCallback(c);
             mImpl.start();
         }
