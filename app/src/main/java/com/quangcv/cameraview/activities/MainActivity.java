@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.quangcv.cameraview.activities;
 
 import android.Manifest;
@@ -29,7 +13,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.StringRes;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -42,8 +25,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.quangcv.cameraview.AspectRatio;
-import com.quangcv.cameraview.AspectRatioFragment;
 import com.quangcv.cameraview.CameraCallback;
 import com.quangcv.cameraview.CameraView;
 import com.quangcv.cameraview.Constants;
@@ -53,7 +34,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Set;
 
 
 /**
@@ -62,7 +42,7 @@ import java.util.Set;
  */
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback,
-        AspectRatioFragment.Listener, CameraCallback {
+        CameraCallback {
 
     private static final String TAG = "MainActivity";
 
@@ -192,16 +172,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.aspect_ratio:
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                if (mCameraView != null
-                        && fragmentManager.findFragmentByTag(FRAGMENT_DIALOG) == null) {
-                    final Set<AspectRatio> ratios = mCameraView.getSupportedAspectRatios();
-                    final AspectRatio currentRatio = mCameraView.getAspectRatio();
-                    AspectRatioFragment.newInstance(ratios, currentRatio)
-                            .show(fragmentManager, FRAGMENT_DIALOG);
-                }
-                return true;
             case R.id.switch_flash:
                 if (mCameraView != null) {
                     mCurrentFlash = (mCurrentFlash + 1) % FLASH_OPTIONS.length;
@@ -219,14 +189,6 @@ public class MainActivity extends AppCompatActivity implements
                 return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onAspectRatioSelected(@NonNull AspectRatio ratio) {
-        if (mCameraView != null) {
-            Toast.makeText(this, ratio.toString(), Toast.LENGTH_SHORT).show();
-            mCameraView.setAspectRatio(ratio);
-        }
     }
 
     private Handler getBackgroundHandler() {

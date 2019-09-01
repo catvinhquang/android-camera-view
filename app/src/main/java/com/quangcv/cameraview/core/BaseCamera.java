@@ -8,11 +8,11 @@ import java.util.Set;
 
 public abstract class BaseCamera {
 
-    CameraCallback callback;
-    CameraView mPreview;
+    protected CameraCallback callback;
+    protected CameraView cameraView;
 
-    BaseCamera(CameraView preview) {
-        mPreview = preview;
+    protected BaseCamera(CameraView preview) {
+        cameraView = preview;
     }
 
     public void setCallback(CameraCallback callback) {
@@ -23,9 +23,6 @@ public abstract class BaseCamera {
         return callback;
     }
 
-    /**
-     * @return {@code true} if the implementation was able to start the camera session.
-     */
     public abstract boolean start();
 
     public abstract void stop();
@@ -38,9 +35,6 @@ public abstract class BaseCamera {
 
     public abstract Set<AspectRatio> getSupportedAspectRatios();
 
-    /**
-     * @return {@code true} if the aspect ratio was changed.
-     */
     public abstract boolean setAspectRatio(AspectRatio ratio);
 
     public abstract AspectRatio getAspectRatio();

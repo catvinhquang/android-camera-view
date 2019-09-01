@@ -74,7 +74,7 @@ public class Camera1 extends BaseCamera {
     public boolean start() {
         chooseCamera();
         openCamera();
-        if (mPreview.isReady()) {
+        if (cameraView.isReady()) {
             setUpPreview();
         }
         mShowingPreview = true;
@@ -95,7 +95,7 @@ public class Camera1 extends BaseCamera {
     @SuppressLint("NewApi")
     void setUpPreview() {
         try {
-            mCamera.setPreviewDisplay(mPreview.getHolder());
+            mCamera.setPreviewDisplay(cameraView.getHolder());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -302,6 +302,7 @@ public class Camera1 extends BaseCamera {
         if (mShowingPreview) {
             mCamera.stopPreview();
         }
+        // TODO quangcv: méo hình preview
         mCameraParameters.setPreviewSize(size.getWidth(), size.getHeight());
         mCameraParameters.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
         mCameraParameters.setRotation(calcCameraRotation(mDisplayOrientation));
@@ -315,13 +316,13 @@ public class Camera1 extends BaseCamera {
 
     @SuppressWarnings("SuspiciousNameCombination")
     private Size chooseOptimalSize(SortedSet<Size> sizes) {
-        if (!mPreview.isReady()) { // Not yet laid out
+        if (!cameraView.isReady()) { // Not yet laid out
             return sizes.first(); // Return the smallest size
         }
         int desiredWidth;
         int desiredHeight;
-        final int surfaceWidth = mPreview.getSurfaceWidth();
-        final int surfaceHeight = mPreview.getSurfaceHeight();
+        final int surfaceWidth = cameraView.getSurfaceWidth();
+        final int surfaceHeight = cameraView.getSurfaceHeight();
         if (isLandscape(mDisplayOrientation)) {
             desiredWidth = surfaceHeight;
             desiredHeight = surfaceWidth;

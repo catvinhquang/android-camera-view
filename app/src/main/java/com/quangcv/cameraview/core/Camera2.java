@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.quangcv.cameraview.core;
 
 import android.annotation.TargetApi;
@@ -207,7 +191,7 @@ public class Camera2 extends BaseCamera {
     public Camera2(CameraView preview, Context context) {
         super(preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        mPreview.setSurfaceCallback(new SurfaceCallback() {
+        cameraView.setSurfaceCallback(new SurfaceCallback() {
             @Override
             public void onSurfaceChanged() {
                 startCaptureSession();
@@ -273,7 +257,6 @@ public class Camera2 extends BaseCamera {
     public boolean setAspectRatio(AspectRatio ratio) {
         if (ratio == null || ratio.equals(mAspectRatio) ||
                 !mPreviewSizes.ratios().contains(ratio)) {
-            // TODO: Better error handling
             return false;
         }
         mAspectRatio = ratio;
@@ -352,7 +335,7 @@ public class Camera2 extends BaseCamera {
     @Override
     public void setDisplayOrientation(int displayOrientation) {
         mDisplayOrientation = displayOrientation;
-        mPreview.setDisplayOrientation(mDisplayOrientation);
+        cameraView.setDisplayOrientation(mDisplayOrientation);
     }
 
     /**
@@ -491,12 +474,12 @@ public class Camera2 extends BaseCamera {
      * <p>The result will be continuously processed in {@link #mSessionCallback}.</p>
      */
     void startCaptureSession() {
-        if (!isCameraOpened() || !mPreview.isReady() || mImageReader == null) {
+        if (!isCameraOpened() || !cameraView.isReady() || mImageReader == null) {
             return;
         }
         Size previewSize = chooseOptimalSize();
-        mPreview.setBufferSize(previewSize.getWidth(), previewSize.getHeight());
-        Surface surface = mPreview.getHolder().getSurface();
+        cameraView.setBufferSize(previewSize.getWidth(), previewSize.getHeight());
+        Surface surface = cameraView.getHolder().getSurface();
         try {
             mPreviewRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
@@ -514,8 +497,8 @@ public class Camera2 extends BaseCamera {
      */
     private Size chooseOptimalSize() {
         int surfaceLonger, surfaceShorter;
-        final int surfaceWidth = mPreview.getSurfaceWidth();
-        final int surfaceHeight = mPreview.getSurfaceHeight();
+        final int surfaceWidth = cameraView.getSurfaceWidth();
+        final int surfaceHeight = cameraView.getSurfaceHeight();
         if (surfaceWidth < surfaceHeight) {
             surfaceLonger = surfaceHeight;
             surfaceShorter = surfaceWidth;
