@@ -38,16 +38,16 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(this);
 
-        if (Build.VERSION.SDK_INT < 21) {
+        // TODO quangcv
+//        if (Build.VERSION.SDK_INT < 21) {
             impl = new Camera1(this);
-        } else {
-            impl = new Camera2(this, context);
-        }
+//        } else {
+//            impl = new Camera2(this, context);
+//        }
 
         setAspectRatio(Constants.DEFAULT_ASPECT_RATIO);
         setFacing(Constants.Facing.FACING_BACK);
         setAutoFocus(true);
-        setFlash(Constants.Flash.FLASH_AUTO);
 
         orientationDetector = new DisplayOrientationDetector(context) {
             @Override
@@ -94,8 +94,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void start() {
         if (!impl.start()) {
-            // Fall back to Camera1
-            // Camera2 uses legacy hardware layer
             CameraCallback c = impl.getCallback();
             impl = new Camera1(this);
             impl.setCallback(c);
@@ -123,10 +121,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void setAutoFocus(boolean autoFocus) {
         impl.setAutoFocus(autoFocus);
-    }
-
-    public void setFlash(@Constants.Flash int flash) {
-        impl.setFlash(flash);
     }
 
     public void setCallback(@NonNull CameraCallback callback) {

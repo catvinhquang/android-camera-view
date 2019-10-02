@@ -1,5 +1,6 @@
 package com.quangcv.cameraview.core;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.ImageFormat;
@@ -94,7 +95,6 @@ public class Camera2 extends BaseCamera {
             }
             mCaptureSession = session;
             updateAutoFocus();
-            updateFlash();
             try {
                 mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(),
                         mCaptureCallback, null);
@@ -164,7 +164,6 @@ public class Camera2 extends BaseCamera {
     private final SizeMap mPictureSizes = new SizeMap();
 
     private int mFacing;
-    private int mFlash;
     private int mDisplayOrientation;
     private boolean mAutoFocus;
 
@@ -284,31 +283,6 @@ public class Camera2 extends BaseCamera {
     @Override
     public boolean getAutoFocus() {
         return mAutoFocus;
-    }
-
-    @Override
-    public void setFlash(int flash) {
-        if (mFlash == flash) {
-            return;
-        }
-        int saved = mFlash;
-        mFlash = flash;
-        if (mPreviewRequestBuilder != null) {
-            updateFlash();
-            if (mCaptureSession != null) {
-                try {
-                    mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(),
-                            mCaptureCallback, null);
-                } catch (CameraAccessException e) {
-                    mFlash = saved; // Revert
-                }
-            }
-        }
-    }
-
-    @Override
-    public int getFlash() {
-        return mFlash;
     }
 
     @Override
@@ -447,6 +421,7 @@ public class Camera2 extends BaseCamera {
      * <p>Starts opening a camera device.</p>
      * <p>The result will be processed in {@link #mCameraDeviceCallback}.</p>
      */
+    @SuppressLint("MissingPermission")
     private void startOpeningCamera() {
         try {
             mCameraManager.openCamera(mCameraId, mCameraDeviceCallback, null);
@@ -527,44 +502,6 @@ public class Camera2 extends BaseCamera {
     }
 
     /**
-     * Updates the internal state of flash to {@link #mFlash}.
-     */
-    void updateFlash() {
-        switch (mFlash) {
-            case Constants.Flash.FLASH_OFF:
-                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON);
-                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                        CaptureRequest.FLASH_MODE_OFF);
-                break;
-            case Constants.Flash.FLASH_ON:
-                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
-                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                        CaptureRequest.FLASH_MODE_OFF);
-                break;
-            case Constants.Flash.FLASH_TORCH:
-                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON);
-                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                        CaptureRequest.FLASH_MODE_TORCH);
-                break;
-            case Constants.Flash.FLASH_AUTO:
-                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                        CaptureRequest.FLASH_MODE_OFF);
-                break;
-            case Constants.Flash.FLASH_RED_EYE:
-                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE);
-                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                        CaptureRequest.FLASH_MODE_OFF);
-                break;
-        }
-    }
-
-    /**
      * Locks the focus as the first step for a still image capture.
      */
     private void lockFocus() {
@@ -588,32 +525,6 @@ public class Camera2 extends BaseCamera {
             captureRequestBuilder.addTarget(mImageReader.getSurface());
             captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                     mPreviewRequestBuilder.get(CaptureRequest.CONTROL_AF_MODE));
-            switch (mFlash) {
-                case Constants.Flash.FLASH_OFF:
-                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON);
-                    captureRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                            CaptureRequest.FLASH_MODE_OFF);
-                    break;
-                case Constants.Flash.FLASH_ON:
-                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH);
-                    break;
-                case Constants.Flash.FLASH_TORCH:
-                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON);
-                    captureRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                            CaptureRequest.FLASH_MODE_TORCH);
-                    break;
-                case Constants.Flash.FLASH_AUTO:
-                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-                    break;
-                case Constants.Flash.FLASH_RED_EYE:
-                    captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-                            CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-                    break;
-            }
             // Calculate JPEG orientation.
             @SuppressWarnings("ConstantConditions")
             int sensorOrientation = mCameraCharacteristics.get(
@@ -648,7 +559,6 @@ public class Camera2 extends BaseCamera {
         try {
             mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, null);
             updateAutoFocus();
-            updateFlash();
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                     CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
             mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback,

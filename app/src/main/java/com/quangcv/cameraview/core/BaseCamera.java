@@ -8,8 +8,8 @@ import java.util.Set;
 
 public abstract class BaseCamera {
 
-    protected CameraCallback callback;
     protected CameraView cameraView;
+    protected CameraCallback callback;
 
     protected BaseCamera(CameraView preview) {
         cameraView = preview;
@@ -42,10 +42,6 @@ public abstract class BaseCamera {
     public abstract void setAutoFocus(boolean autoFocus);
 
     public abstract boolean getAutoFocus();
-
-    public abstract void setFlash(int flash);
-
-    public abstract int getFlash();
 
     public abstract void takePicture();
 
