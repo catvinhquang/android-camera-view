@@ -1,4 +1,4 @@
-package com.quangcv.cameraview;
+package com.quangcv.cameraview.lib;
 
 import android.support.annotation.IntDef;
 

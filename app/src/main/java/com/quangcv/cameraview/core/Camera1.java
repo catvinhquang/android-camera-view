@@ -4,12 +4,12 @@ import android.annotation.SuppressLint;
 import android.hardware.Camera;
 import android.support.v4.util.SparseArrayCompat;
 
-import com.quangcv.cameraview.AspectRatio;
-import com.quangcv.cameraview.CameraView;
-import com.quangcv.cameraview.Constants;
-import com.quangcv.cameraview.Size;
-import com.quangcv.cameraview.SizeMap;
-import com.quangcv.cameraview.SurfaceCallback;
+import com.quangcv.cameraview.lib.AspectRatio;
+import com.quangcv.cameraview.lib.CameraView;
+import com.quangcv.cameraview.lib.Constants;
+import com.quangcv.cameraview.lib.Size;
+import com.quangcv.cameraview.lib.SizeMap;
+import com.quangcv.cameraview.lib.SurfaceCallback;
 
 import java.io.IOException;
 import java.util.List;

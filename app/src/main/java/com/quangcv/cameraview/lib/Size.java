@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.quangcv.cameraview;
+package com.quangcv.cameraview.lib;
 
 import android.support.annotation.NonNull;
 

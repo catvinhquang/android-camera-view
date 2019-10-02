@@ -1,8 +1,8 @@
 package com.quangcv.cameraview.core;
 
-import com.quangcv.cameraview.AspectRatio;
-import com.quangcv.cameraview.CameraCallback;
-import com.quangcv.cameraview.CameraView;
+import com.quangcv.cameraview.lib.AspectRatio;
+import com.quangcv.cameraview.lib.CameraCallback;
+import com.quangcv.cameraview.lib.CameraView;
 
 import java.util.Set;
 

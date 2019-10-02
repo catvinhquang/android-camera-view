@@ -12,8 +12,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.quangcv.cameraview.CameraCallback;
-import com.quangcv.cameraview.CameraView;
+import com.quangcv.cameraview.lib.CameraCallback;
+import com.quangcv.cameraview.lib.CameraView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,7 +22,7 @@ import java.io.OutputStream;
 
 /**
  * This demo app saves the taken picture to a constant file.
- * $ adb pull /sdcard/Android/data/com.google.android.cameraview.demo/files/Pictures/picture.jpg
+ * $ adb pull /sdcard/Android/data/com.quangcv.cameraview/files/Pictures/picture.jpg
  */
 
 public class MainActivity extends Activity
@@ -70,14 +70,11 @@ public class MainActivity extends Activity
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (permissions.length != 1 || grantResults.length != 1) {
-                throw new RuntimeException("Error on requesting camera permission.");
-            }
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Camera app cannot do anything without camera permission", Toast.LENGTH_SHORT).show();
-            }
-            // No need to start camera here; it is handled by onResume
+        if (requestCode == REQUEST_CAMERA_PERMISSION
+                && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this,
+                    "Camera app cannot do anything without camera permission",
+                    Toast.LENGTH_SHORT).show();
         }
     }
 

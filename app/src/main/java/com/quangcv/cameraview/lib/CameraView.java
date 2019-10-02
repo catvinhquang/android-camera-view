@@ -1,10 +1,8 @@
-package com.quangcv.cameraview;
+package com.quangcv.cameraview.lib;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
@@ -14,16 +12,14 @@ import com.quangcv.cameraview.core.BaseCamera;
 import com.quangcv.cameraview.core.Camera1;
 import com.quangcv.cameraview.core.Camera2;
 
-import java.util.Set;
-
 public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
-    private DisplayOrientationDetector mDisplayOrientationDetector;
-    private BaseCamera mImpl;
-
+    private BaseCamera impl;
     private SurfaceCallback surfaceCallback;
     private int surfaceWidth;
     private int surfaceHeight;
+
+    private DisplayOrientationDetector orientationDetector;
 
     public CameraView(Context context) {
         this(context, null);
@@ -43,26 +39,20 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         holder.addCallback(this);
 
         if (Build.VERSION.SDK_INT < 21) {
-            mImpl = new Camera1(this);
+            impl = new Camera1(this);
         } else {
-            mImpl = new Camera2(this, context);
+            impl = new Camera2(this, context);
         }
 
-        TypedArray a = context.obtainStyledAttributes(attrs,
-                R.styleable.CameraView,
-                defStyleAttr,
-                R.style.Widget_CameraView);
-        String aspectRatio = a.getString(R.styleable.CameraView_aspectRatio);
-        setAspectRatio(aspectRatio != null ? AspectRatio.parse(aspectRatio) : Constants.DEFAULT_ASPECT_RATIO);
-        setFacing(a.getInt(R.styleable.CameraView_facing, Constants.Facing.FACING_BACK));
-        setAutoFocus(a.getBoolean(R.styleable.CameraView_autoFocus, true));
-        setFlash(a.getInt(R.styleable.CameraView_flash, Constants.Flash.FLASH_AUTO));
-        a.recycle();
+        setAspectRatio(Constants.DEFAULT_ASPECT_RATIO);
+        setFacing(Constants.Facing.FACING_BACK);
+        setAutoFocus(true);
+        setFlash(Constants.Flash.FLASH_AUTO);
 
-        mDisplayOrientationDetector = new DisplayOrientationDetector(context) {
+        orientationDetector = new DisplayOrientationDetector(context) {
             @Override
             public void onDisplayOrientationChanged(int displayOrientation) {
-                mImpl.setDisplayOrientation(displayOrientation);
+                impl.setDisplayOrientation(displayOrientation);
             }
         };
     }
@@ -90,7 +80,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (!isInEditMode()) {
-            mDisplayOrientationDetector.enable(ViewCompat.getDisplay(this));
+            orientationDetector.enable(ViewCompat.getDisplay(this));
         }
     }
 
@@ -98,76 +88,51 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (!isInEditMode()) {
-            mDisplayOrientationDetector.disable();
+            orientationDetector.disable();
         }
     }
 
     public void start() {
-        if (!mImpl.start()) {
+        if (!impl.start()) {
             // Fall back to Camera1
             // Camera2 uses legacy hardware layer
-            CameraCallback c = mImpl.getCallback();
-            mImpl = new Camera1(this);
-            mImpl.setCallback(c);
-            mImpl.start();
+            CameraCallback c = impl.getCallback();
+            impl = new Camera1(this);
+            impl.setCallback(c);
+            impl.start();
         }
     }
 
     public void stop() {
-        mImpl.stop();
+        impl.stop();
     }
 
     public void takePicture() {
-        mImpl.takePicture();
+        impl.takePicture();
     }
 
     public void setFacing(@Constants.Facing int facing) {
-        mImpl.setFacing(facing);
-    }
-
-    @Constants.Facing
-    public int getFacing() {
-        return mImpl.getFacing();
-    }
-
-    public Set<AspectRatio> getSupportedAspectRatios() {
-        return mImpl.getSupportedAspectRatios();
+        impl.setFacing(facing);
     }
 
     public void setAspectRatio(@NonNull AspectRatio ratio) {
-        if (mImpl.setAspectRatio(ratio)) {
+        if (impl.setAspectRatio(ratio)) {
             requestLayout();
         }
     }
 
-    @Nullable
-    public AspectRatio getAspectRatio() {
-        return mImpl.getAspectRatio();
-    }
-
     public void setAutoFocus(boolean autoFocus) {
-        mImpl.setAutoFocus(autoFocus);
-    }
-
-    public boolean getAutoFocus() {
-        return mImpl.getAutoFocus();
+        impl.setAutoFocus(autoFocus);
     }
 
     public void setFlash(@Constants.Flash int flash) {
-        mImpl.setFlash(flash);
-    }
-
-    @Constants.Flash
-    public int getFlash() {
-        return mImpl.getFlash();
+        impl.setFlash(flash);
     }
 
     public void setCallback(@NonNull CameraCallback callback) {
-        mImpl.setCallback(callback);
+        impl.setCallback(callback);
     }
 
-
-    // ==== surfaceview preview
     public void setSurfaceCallback(SurfaceCallback callback) {
         surfaceCallback = callback;
     }
@@ -182,12 +147,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     public boolean isReady() {
         return surfaceWidth != 0 && surfaceHeight != 0;
-    }
-
-    public void setDisplayOrientation(int displayOrientation) {
-    }
-
-    public void setBufferSize(int width, int height) {
     }
 
 }

@@ -21,12 +21,12 @@ import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.quangcv.cameraview.AspectRatio;
-import com.quangcv.cameraview.CameraView;
-import com.quangcv.cameraview.Constants;
-import com.quangcv.cameraview.Size;
-import com.quangcv.cameraview.SizeMap;
-import com.quangcv.cameraview.SurfaceCallback;
+import com.quangcv.cameraview.lib.AspectRatio;
+import com.quangcv.cameraview.lib.CameraView;
+import com.quangcv.cameraview.lib.Constants;
+import com.quangcv.cameraview.lib.Size;
+import com.quangcv.cameraview.lib.SizeMap;
+import com.quangcv.cameraview.lib.SurfaceCallback;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -335,7 +335,6 @@ public class Camera2 extends BaseCamera {
     @Override
     public void setDisplayOrientation(int displayOrientation) {
         mDisplayOrientation = displayOrientation;
-        cameraView.setDisplayOrientation(mDisplayOrientation);
     }
 
     /**
@@ -477,8 +476,6 @@ public class Camera2 extends BaseCamera {
         if (!isCameraOpened() || !cameraView.isReady() || mImageReader == null) {
             return;
         }
-        Size previewSize = chooseOptimalSize();
-        cameraView.setBufferSize(previewSize.getWidth(), previewSize.getHeight());
         Surface surface = cameraView.getHolder().getSurface();
         try {
             mPreviewRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);

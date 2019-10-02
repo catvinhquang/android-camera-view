@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.quangcv.cameraview;
+package com.quangcv.cameraview.lib;
 
 import android.os.Parcel;
 import android.os.Parcelable;
