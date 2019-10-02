@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="Theme.App" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
-    </style>
-
     <style name="Widget.CameraView" parent="android:Widget">
         <item name="facing">back</item>
         <item name="aspectRatio">4:3</item>
