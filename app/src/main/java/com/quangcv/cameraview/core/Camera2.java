@@ -36,8 +36,7 @@ import java.util.SortedSet;
 @TargetApi(21)
 public class Camera2 extends BaseCamera {
 
-    private static final String TAG = "Camera2";
-
+    private static final String TAG = Camera2.class.getSimpleName();
     private static final SparseIntArray INTERNAL_FACINGS = new SparseIntArray();
 
     static {
@@ -161,32 +160,21 @@ public class Camera2 extends BaseCamera {
 
     };
 
-
-    private String mCameraId;
-
-    private CameraCharacteristics mCameraCharacteristics;
-
-    CameraDevice mCamera;
-
-    CameraCaptureSession mCaptureSession;
-
-    CaptureRequest.Builder mPreviewRequestBuilder;
-
-    private ImageReader mImageReader;
-
     private final SizeMap mPreviewSizes = new SizeMap();
-
     private final SizeMap mPictureSizes = new SizeMap();
 
     private int mFacing;
-
-    private AspectRatio mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
-
+    private int mFlash;
+    private int mDisplayOrientation;
     private boolean mAutoFocus;
 
-    private int mFlash;
-
-    private int mDisplayOrientation;
+    private String mCameraId;
+    private CameraCharacteristics mCameraCharacteristics;
+    private CameraDevice mCamera;
+    private CameraCaptureSession mCaptureSession;
+    private CaptureRequest.Builder mPreviewRequestBuilder;
+    private ImageReader mImageReader;
+    private AspectRatio mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
 
     public Camera2(CameraView preview, Context context) {
         super(preview);

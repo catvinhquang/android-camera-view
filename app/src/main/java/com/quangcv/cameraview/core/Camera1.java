@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Camera1 extends BaseCamera {
 
     private static final int INVALID_CAMERA_ID = -1;
-
     private static final SparseArrayCompat<String> FLASH_MODES = new SparseArrayCompat<>();
 
     static {
@@ -31,31 +30,21 @@ public class Camera1 extends BaseCamera {
         FLASH_MODES.put(Constants.Flash.FLASH_RED_EYE, Camera.Parameters.FLASH_MODE_RED_EYE);
     }
 
-    private int mCameraId;
-
     private final AtomicBoolean isPictureCaptureInProgress = new AtomicBoolean(false);
-
-    Camera mCamera;
-
-    private Camera.Parameters mCameraParameters;
-
     private final Camera.CameraInfo mCameraInfo = new Camera.CameraInfo();
-
     private final SizeMap mPreviewSizes = new SizeMap();
-
     private final SizeMap mPictureSizes = new SizeMap();
 
-    private AspectRatio mAspectRatio;
-
+    private int mCameraId;
+    private int mFacing;
+    private int mFlash;
+    private int mDisplayOrientation;
     private boolean mShowingPreview;
-
     private boolean mAutoFocus;
 
-    private int mFacing;
-
-    private int mFlash;
-
-    private int mDisplayOrientation;
+    private Camera mCamera;
+    private Camera.Parameters mCameraParameters;
+    private AspectRatio mAspectRatio;
 
     public Camera1(CameraView preview) {
         super(preview);
