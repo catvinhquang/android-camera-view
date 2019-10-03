@@ -1,10 +1,7 @@
 package com.quangcv.cameraview.core;
 
-import com.quangcv.cameraview.lib.AspectRatio;
 import com.quangcv.cameraview.lib.CameraCallback;
 import com.quangcv.cameraview.lib.CameraView;
-
-import java.util.Set;
 
 public abstract class BaseCamera {
 
@@ -29,14 +26,6 @@ public abstract class BaseCamera {
 
     public abstract boolean isCameraOpened();
 
-    public abstract Set<AspectRatio> getSupportedAspectRatios();
-
-    public abstract boolean setAspectRatio(AspectRatio ratio);
-
-    public abstract AspectRatio getAspectRatio();
-
     public abstract void takePicture();
-
-    public abstract void setDisplayOrientation(int displayOrientation);
 
 }

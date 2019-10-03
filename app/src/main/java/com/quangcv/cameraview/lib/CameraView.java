@@ -18,8 +18,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
     private int surfaceWidth;
     private int surfaceHeight;
 
-    private DisplayOrientationDetector orientationDetector;
-
     public CameraView(Context context) {
         this(context, null);
     }
@@ -43,15 +41,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 //        } else {
         impl = new Camera2(this, context);
 //        }
-
-        setAspectRatio(Constants.DEFAULT_ASPECT_RATIO);
-
-        orientationDetector = new DisplayOrientationDetector(context) {
-            @Override
-            public void onDisplayOrientationChanged(int displayOrientation) {
-                impl.setDisplayOrientation(displayOrientation);
-            }
-        };
     }
 
     @Override
@@ -73,22 +62,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         surfaceWidth = surfaceHeight = 0;
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (!isInEditMode()) {
-            orientationDetector.enable(ViewCompat.getDisplay(this));
-        }
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        if (!isInEditMode()) {
-            orientationDetector.disable();
-        }
-    }
-
     public void start() {
         if (!impl.start()) {
             CameraCallback c = impl.getCallback();
@@ -104,12 +77,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void takePicture() {
         impl.takePicture();
-    }
-
-    public void setAspectRatio(@NonNull AspectRatio ratio) {
-        if (impl.setAspectRatio(ratio)) {
-            requestLayout();
-        }
     }
 
     public void setCallback(@NonNull CameraCallback callback) {

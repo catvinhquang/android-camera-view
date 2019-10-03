@@ -23,7 +23,6 @@ import android.view.SurfaceHolder;
 
 import com.quangcv.cameraview.lib.AspectRatio;
 import com.quangcv.cameraview.lib.CameraView;
-import com.quangcv.cameraview.lib.Constants;
 import com.quangcv.cameraview.lib.Size;
 import com.quangcv.cameraview.lib.SizeMap;
 import com.quangcv.cameraview.lib.SurfaceCallback;
@@ -31,27 +30,17 @@ import com.quangcv.cameraview.lib.SurfaceCallback;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.SortedSet;
 
 @TargetApi(21)
 public class Camera2 extends BaseCamera {
 
     private static final String TAG = Camera2.class.getSimpleName();
-
-    /**
-     * Max preview width that is guaranteed by Camera2 API
-     */
     private static final int MAX_PREVIEW_WIDTH = 1920;
-
-    /**
-     * Max preview height that is guaranteed by Camera2 API
-     */
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
-    private final CameraManager mCameraManager;
+    private CameraManager mCameraManager;
 
-    private final CameraDevice.StateCallback mCameraDeviceCallback
-            = new CameraDevice.StateCallback() {
+    private CameraDevice.StateCallback mCameraDeviceCallback = new CameraDevice.StateCallback() {
 
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
@@ -78,8 +67,7 @@ public class Camera2 extends BaseCamera {
 
     };
 
-    private final CameraCaptureSession.StateCallback mSessionCallback
-            = new CameraCaptureSession.StateCallback() {
+    private CameraCaptureSession.StateCallback mSessionCallback = new CameraCaptureSession.StateCallback() {
 
         @Override
         public void onConfigured(@NonNull CameraCaptureSession session) {
@@ -111,7 +99,7 @@ public class Camera2 extends BaseCamera {
 
     };
 
-    PictureCaptureCallback mCaptureCallback = new PictureCaptureCallback() {
+    private PictureCaptureCallback mCaptureCallback = new PictureCaptureCallback() {
 
         @Override
         public void onPrecaptureRequired() {
@@ -134,8 +122,7 @@ public class Camera2 extends BaseCamera {
 
     };
 
-    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
-            = new ImageReader.OnImageAvailableListener() {
+    private ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
 
         @Override
         public void onImageAvailable(ImageReader reader) {
@@ -152,10 +139,8 @@ public class Camera2 extends BaseCamera {
 
     };
 
-    private final SizeMap mPreviewSizes = new SizeMap();
-    private final SizeMap mPictureSizes = new SizeMap();
-
-    private int mDisplayOrientation;
+    private SizeMap mPreviewSizes = new SizeMap();
+    private SizeMap mPictureSizes = new SizeMap();
 
     private String mCameraId;
     private CameraCharacteristics mCameraCharacteristics;
@@ -163,7 +148,7 @@ public class Camera2 extends BaseCamera {
     private CameraCaptureSession mCaptureSession;
     private CaptureRequest.Builder mPreviewRequestBuilder;
     private ImageReader mImageReader;
-    private AspectRatio mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
+    private AspectRatio mAspectRatio = AspectRatio.of(4, 3);
 
     public Camera2(CameraView preview, Context context) {
         super(preview);
@@ -209,40 +194,8 @@ public class Camera2 extends BaseCamera {
     }
 
     @Override
-    public Set<AspectRatio> getSupportedAspectRatios() {
-        return mPreviewSizes.ratios();
-    }
-
-    @Override
-    public boolean setAspectRatio(AspectRatio ratio) {
-        if (ratio == null || ratio.equals(mAspectRatio) ||
-                !mPreviewSizes.ratios().contains(ratio)) {
-            return false;
-        }
-        mAspectRatio = ratio;
-        prepareImageReader();
-        if (mCaptureSession != null) {
-            mCaptureSession.close();
-            mCaptureSession = null;
-            startCaptureSession();
-        }
-        return true;
-    }
-
-    @Override
-    public AspectRatio getAspectRatio() {
-        return mAspectRatio;
-    }
-
-    @Override
     public void takePicture() {
-
         captureStillPicture();
-    }
-
-    @Override
-    public void setDisplayOrientation(int displayOrientation) {
-        mDisplayOrientation = displayOrientation;
     }
 
     private boolean chooseCameraId() {
@@ -283,17 +236,11 @@ public class Camera2 extends BaseCamera {
         }
     }
 
-    /**
-     * <p>Collects some information from {@link #mCameraCharacteristics}.</p>
-     * <p>This rewrites {@link #mPreviewSizes}, {@link #mPictureSizes}, and optionally,
-     * {@link #mAspectRatio}.</p>
-     */
     private void collectCameraInfo() {
-        StreamConfigurationMap map = mCameraCharacteristics.get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-        if (map == null) {
+        StreamConfigurationMap map = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        if (map == null)
             throw new IllegalStateException("Failed to get configuration map: " + mCameraId);
-        }
+
         mPreviewSizes.clear();
         for (android.util.Size size : map.getOutputSizes(SurfaceHolder.class)) {
             int width = size.getWidth();
@@ -315,7 +262,7 @@ public class Camera2 extends BaseCamera {
         }
     }
 
-    protected void collectPictureSizes(SizeMap sizes, StreamConfigurationMap map) {
+    private void collectPictureSizes(SizeMap sizes, StreamConfigurationMap map) {
         // Try to get hi-res output sizes
         android.util.Size[] outputSizes = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -338,15 +285,10 @@ public class Camera2 extends BaseCamera {
             mImageReader.close();
         }
         Size largest = mPictureSizes.sizes(mAspectRatio).last();
-        mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-                ImageFormat.JPEG, /* maxImages */ 2);
+        mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(), ImageFormat.JPEG, /* maxImages */ 2);
         mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, null);
     }
 
-    /**
-     * <p>Starts opening a camera device.</p>
-     * <p>The result will be processed in {@link #mCameraDeviceCallback}.</p>
-     */
     @SuppressLint("MissingPermission")
     private void startOpeningCamera() {
         try {
@@ -356,11 +298,6 @@ public class Camera2 extends BaseCamera {
         }
     }
 
-    /**
-     * <p>Starts a capture session for camera preview.</p>
-     * <p>This rewrites {@link #mPreviewRequestBuilder}.</p>
-     * <p>The result will be continuously processed in {@link #mSessionCallback}.</p>
-     */
     void startCaptureSession() {
         if (!isCameraOpened() || !cameraView.isReady() || mImageReader == null) {
             return;
@@ -376,37 +313,6 @@ public class Camera2 extends BaseCamera {
         }
     }
 
-    /**
-     * Chooses the optimal preview size based on {@link #mPreviewSizes} and the surface size.
-     *
-     * @return The picked size for camera preview.
-     */
-    private Size chooseOptimalSize() {
-        int surfaceLonger, surfaceShorter;
-        final int surfaceWidth = cameraView.getSurfaceWidth();
-        final int surfaceHeight = cameraView.getSurfaceHeight();
-        if (surfaceWidth < surfaceHeight) {
-            surfaceLonger = surfaceHeight;
-            surfaceShorter = surfaceWidth;
-        } else {
-            surfaceLonger = surfaceWidth;
-            surfaceShorter = surfaceHeight;
-        }
-        SortedSet<Size> candidates = mPreviewSizes.sizes(mAspectRatio);
-
-        // Pick the smallest of those big enough
-        for (Size size : candidates) {
-            if (size.getWidth() >= surfaceLonger && size.getHeight() >= surfaceShorter) {
-                return size;
-            }
-        }
-        // If no size is big enough, pick the largest one.
-        return candidates.last();
-    }
-
-    /**
-     * Captures a still picture.
-     */
     void captureStillPicture() {
         try {
             CaptureRequest.Builder captureRequestBuilder = mCamera.createCaptureRequest(
@@ -418,7 +324,7 @@ public class Camera2 extends BaseCamera {
             @SuppressWarnings("ConstantConditions")
             int sensorOrientation = mCameraCharacteristics.get(
                     CameraCharacteristics.SENSOR_ORIENTATION);
-            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, (sensorOrientation + mDisplayOrientation /* (mFacing == Constants.Facing.FACING_FRONT ? 1 : -1) */ + 360) % 360);
+            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, (sensorOrientation + 360) % 360);
             // Stop preview and capture a still picture.
             mCaptureSession.stopRepeating();
             mCaptureSession.capture(captureRequestBuilder.build(),
@@ -435,10 +341,6 @@ public class Camera2 extends BaseCamera {
         }
     }
 
-    /**
-     * Unlocks the auto-focus and restart camera preview. This is supposed to be called after
-     * capturing a still picture.
-     */
     void unlockFocus() {
         mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
@@ -454,11 +356,7 @@ public class Camera2 extends BaseCamera {
         }
     }
 
-    /**
-     * A {@link CameraCaptureSession.CaptureCallback} for capturing a still picture.
-     */
-    private static abstract class PictureCaptureCallback
-            extends CameraCaptureSession.CaptureCallback {
+    private static abstract class PictureCaptureCallback extends CameraCaptureSession.CaptureCallback {
 
         static final int STATE_PREVIEW = 0;
         static final int STATE_LOCKING = 1;
