@@ -1,7 +1,6 @@
 package com.quangcv.cameraview.lib;
 
 import android.content.Context;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
@@ -40,14 +39,12 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
         // TODO quangcv
 //        if (Build.VERSION.SDK_INT < 21) {
-            impl = new Camera1(this);
+//            impl = new Camera1(this);
 //        } else {
-//            impl = new Camera2(this, context);
+        impl = new Camera2(this, context);
 //        }
 
         setAspectRatio(Constants.DEFAULT_ASPECT_RATIO);
-        setFacing(Constants.Facing.FACING_BACK);
-        setAutoFocus(true);
 
         orientationDetector = new DisplayOrientationDetector(context) {
             @Override
@@ -109,18 +106,10 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         impl.takePicture();
     }
 
-    public void setFacing(@Constants.Facing int facing) {
-        impl.setFacing(facing);
-    }
-
     public void setAspectRatio(@NonNull AspectRatio ratio) {
         if (impl.setAspectRatio(ratio)) {
             requestLayout();
         }
-    }
-
-    public void setAutoFocus(boolean autoFocus) {
-        impl.setAutoFocus(autoFocus);
     }
 
     public void setCallback(@NonNull CameraCallback callback) {

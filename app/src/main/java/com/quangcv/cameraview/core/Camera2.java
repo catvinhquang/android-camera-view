@@ -18,7 +18,6 @@ import android.media.ImageReader;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
@@ -38,12 +37,6 @@ import java.util.SortedSet;
 public class Camera2 extends BaseCamera {
 
     private static final String TAG = Camera2.class.getSimpleName();
-    private static final SparseIntArray INTERNAL_FACINGS = new SparseIntArray();
-
-    static {
-        INTERNAL_FACINGS.put(Constants.Facing.FACING_BACK, CameraCharacteristics.LENS_FACING_BACK);
-        INTERNAL_FACINGS.put(Constants.Facing.FACING_FRONT, CameraCharacteristics.LENS_FACING_FRONT);
-    }
 
     /**
      * Max preview width that is guaranteed by Camera2 API
@@ -94,7 +87,6 @@ public class Camera2 extends BaseCamera {
                 return;
             }
             mCaptureSession = session;
-            updateAutoFocus();
             try {
                 mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(),
                         mCaptureCallback, null);
@@ -163,9 +155,7 @@ public class Camera2 extends BaseCamera {
     private final SizeMap mPreviewSizes = new SizeMap();
     private final SizeMap mPictureSizes = new SizeMap();
 
-    private int mFacing;
     private int mDisplayOrientation;
-    private boolean mAutoFocus;
 
     private String mCameraId;
     private CameraCharacteristics mCameraCharacteristics;
@@ -188,7 +178,7 @@ public class Camera2 extends BaseCamera {
 
     @Override
     public boolean start() {
-        if (!chooseCameraIdByFacing()) {
+        if (!chooseCameraId()) {
             return false;
         }
         collectCameraInfo();
@@ -219,23 +209,6 @@ public class Camera2 extends BaseCamera {
     }
 
     @Override
-    public void setFacing(int facing) {
-        if (mFacing == facing) {
-            return;
-        }
-        mFacing = facing;
-        if (isCameraOpened()) {
-            stop();
-            start();
-        }
-    }
-
-    @Override
-    public int getFacing() {
-        return mFacing;
-    }
-
-    @Override
     public Set<AspectRatio> getSupportedAspectRatios() {
         return mPreviewSizes.ratios();
     }
@@ -262,36 +235,9 @@ public class Camera2 extends BaseCamera {
     }
 
     @Override
-    public void setAutoFocus(boolean autoFocus) {
-        if (mAutoFocus == autoFocus) {
-            return;
-        }
-        mAutoFocus = autoFocus;
-        if (mPreviewRequestBuilder != null) {
-            updateAutoFocus();
-            if (mCaptureSession != null) {
-                try {
-                    mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(),
-                            mCaptureCallback, null);
-                } catch (CameraAccessException e) {
-                    mAutoFocus = !mAutoFocus; // Revert
-                }
-            }
-        }
-    }
-
-    @Override
-    public boolean getAutoFocus() {
-        return mAutoFocus;
-    }
-
-    @Override
     public void takePicture() {
-        if (mAutoFocus) {
-            lockFocus();
-        } else {
-            captureStillPicture();
-        }
+
+        captureStillPicture();
     }
 
     @Override
@@ -299,14 +245,8 @@ public class Camera2 extends BaseCamera {
         mDisplayOrientation = displayOrientation;
     }
 
-    /**
-     * <p>Chooses a camera ID by the specified camera facing ({@link #mFacing}).</p>
-     * <p>This rewrites {@link #mCameraId}, {@link #mCameraCharacteristics}, and optionally
-     * {@link #mFacing}.</p>
-     */
-    private boolean chooseCameraIdByFacing() {
+    private boolean chooseCameraId() {
         try {
-            int internalFacing = INTERNAL_FACINGS.get(mFacing);
             final String[] ids = mCameraManager.getCameraIdList();
             if (ids.length == 0) { // No camera
                 throw new RuntimeException("No camera available.");
@@ -323,11 +263,10 @@ public class Camera2 extends BaseCamera {
                 if (internal == null) {
                     throw new NullPointerException("Unexpected state: LENS_FACING null");
                 }
-                if (internal == internalFacing) {
-                    mCameraId = id;
-                    mCameraCharacteristics = characteristics;
-                    return true;
-                }
+
+                mCameraId = id;
+                mCameraCharacteristics = characteristics;
+                return true;
             }
             // Not found
             mCameraId = ids[0];
@@ -338,19 +277,6 @@ public class Camera2 extends BaseCamera {
                     level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
                 return false;
             }
-            Integer internal = mCameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
-            if (internal == null) {
-                throw new NullPointerException("Unexpected state: LENS_FACING null");
-            }
-            for (int i = 0, count = INTERNAL_FACINGS.size(); i < count; i++) {
-                if (INTERNAL_FACINGS.valueAt(i) == internal) {
-                    mFacing = INTERNAL_FACINGS.keyAt(i);
-                    return true;
-                }
-            }
-            // The operation can reach here when the only camera device is an external one.
-            // We treat it as facing back.
-            mFacing = Constants.Facing.FACING_BACK;
             return true;
         } catch (CameraAccessException e) {
             throw new RuntimeException("Failed to get a list of camera devices", e);
@@ -479,43 +405,6 @@ public class Camera2 extends BaseCamera {
     }
 
     /**
-     * Updates the internal state of auto-focus to {@link #mAutoFocus}.
-     */
-    void updateAutoFocus() {
-        if (mAutoFocus) {
-            int[] modes = mCameraCharacteristics.get(
-                    CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
-            // Auto focus is not supported
-            if (modes == null || modes.length == 0 ||
-                    (modes.length == 1 && modes[0] == CameraCharacteristics.CONTROL_AF_MODE_OFF)) {
-                mAutoFocus = false;
-                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                        CaptureRequest.CONTROL_AF_MODE_OFF);
-            } else {
-                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-            }
-        } else {
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_OFF);
-        }
-    }
-
-    /**
-     * Locks the focus as the first step for a still image capture.
-     */
-    private void lockFocus() {
-        mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                CaptureRequest.CONTROL_AF_TRIGGER_START);
-        try {
-            mCaptureCallback.setState(PictureCaptureCallback.STATE_LOCKING);
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, null);
-        } catch (CameraAccessException e) {
-            Log.e(TAG, "Failed to lock focus.", e);
-        }
-    }
-
-    /**
      * Captures a still picture.
      */
     void captureStillPicture() {
@@ -529,10 +418,7 @@ public class Camera2 extends BaseCamera {
             @SuppressWarnings("ConstantConditions")
             int sensorOrientation = mCameraCharacteristics.get(
                     CameraCharacteristics.SENSOR_ORIENTATION);
-            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION,
-                    (sensorOrientation +
-                            mDisplayOrientation * (mFacing == Constants.Facing.FACING_FRONT ? 1 : -1) +
-                            360) % 360);
+            captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, (sensorOrientation + mDisplayOrientation /* (mFacing == Constants.Facing.FACING_FRONT ? 1 : -1) */ + 360) % 360);
             // Stop preview and capture a still picture.
             mCaptureSession.stopRepeating();
             mCaptureSession.capture(captureRequestBuilder.build(),
@@ -558,7 +444,6 @@ public class Camera2 extends BaseCamera {
                 CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
         try {
             mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, null);
-            updateAutoFocus();
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                     CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
             mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback,

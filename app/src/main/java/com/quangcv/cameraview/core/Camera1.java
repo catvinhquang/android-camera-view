@@ -1,7 +1,6 @@
 package com.quangcv.cameraview.core;
 
 import android.hardware.Camera;
-import android.support.v4.util.SparseArrayCompat;
 
 import com.quangcv.cameraview.lib.AspectRatio;
 import com.quangcv.cameraview.lib.CameraView;
@@ -11,7 +10,6 @@ import com.quangcv.cameraview.lib.SizeMap;
 import com.quangcv.cameraview.lib.SurfaceCallback;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,15 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Camera1 extends BaseCamera {
 
     private static final int INVALID_CAMERA_ID = -1;
-    private static final SparseArrayCompat<String> FLASH_MODES = new SparseArrayCompat<>();
-
-    static {
-        FLASH_MODES.put(Constants.Flash.FLASH_OFF, Camera.Parameters.FLASH_MODE_OFF);
-        FLASH_MODES.put(Constants.Flash.FLASH_ON, Camera.Parameters.FLASH_MODE_ON);
-        FLASH_MODES.put(Constants.Flash.FLASH_TORCH, Camera.Parameters.FLASH_MODE_TORCH);
-        FLASH_MODES.put(Constants.Flash.FLASH_AUTO, Camera.Parameters.FLASH_MODE_AUTO);
-        FLASH_MODES.put(Constants.Flash.FLASH_RED_EYE, Camera.Parameters.FLASH_MODE_RED_EYE);
-    }
 
     private final AtomicBoolean isPictureCaptureInProgress = new AtomicBoolean(false);
     private final Camera.CameraInfo mCameraInfo = new Camera.CameraInfo();
@@ -35,10 +24,8 @@ public class Camera1 extends BaseCamera {
     private final SizeMap mPictureSizes = new SizeMap();
 
     private int mCameraId;
-    private int mFacing;
     private int mDisplayOrientation;
     private boolean mShowingPreview;
-    private boolean mAutoFocus;
 
     private Camera camera;
     private Camera.Parameters mCameraParameters;
@@ -92,22 +79,6 @@ public class Camera1 extends BaseCamera {
     }
 
     @Override
-    public void setFacing(int facing) {
-        if (mFacing != facing) {
-            mFacing = facing;
-            if (isCameraOpened()) {
-                stop();
-                start();
-            }
-        }
-    }
-
-    @Override
-    public int getFacing() {
-        return mFacing;
-    }
-
-    @Override
     public Set<AspectRatio> getSupportedAspectRatios() {
         SizeMap idealAspectRatios = mPreviewSizes;
         for (AspectRatio aspectRatio : idealAspectRatios.ratios()) {
@@ -142,40 +113,11 @@ public class Camera1 extends BaseCamera {
     }
 
     @Override
-    public void setAutoFocus(boolean autoFocus) {
-        if (mAutoFocus == autoFocus) {
-            return;
-        }
-        if (setAutoFocusInternal(autoFocus)) {
-            camera.setParameters(mCameraParameters);
-        }
-    }
-
-    @Override
-    public boolean getAutoFocus() {
-        if (!isCameraOpened()) {
-            return mAutoFocus;
-        }
-        String focusMode = mCameraParameters.getFocusMode();
-        return focusMode != null && focusMode.contains("continuous");
-    }
-
-    @Override
     public void takePicture() {
         if (!isCameraOpened()) {
             throw new IllegalStateException("Camera is not ready. Call start() before takePicture().");
         }
-        if (getAutoFocus()) {
-            camera.cancelAutoFocus();
-            camera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean success, Camera camera) {
-                    takePictureInternal();
-                }
-            });
-        } else {
-            takePictureInternal();
-        }
+        takePictureInternal();
     }
 
     void takePictureInternal() {
@@ -208,12 +150,10 @@ public class Camera1 extends BaseCamera {
      * This rewrites {@link #mCameraId} and {@link #mCameraInfo}.
      */
     private void chooseCamera() {
-        for (int i = 0, count = Camera.getNumberOfCameras(); i < count; i++) {
-            Camera.getCameraInfo(i, mCameraInfo);
-            if (mCameraInfo.facing == mFacing) {
-                mCameraId = i;
-                return;
-            }
+        if (Camera.getNumberOfCameras() > 0) {
+            Camera.getCameraInfo(0, mCameraInfo);
+            mCameraId = 0;
+            return;
         }
         mCameraId = INVALID_CAMERA_ID;
     }
@@ -272,7 +212,6 @@ public class Camera1 extends BaseCamera {
         mCameraParameters.setPreviewSize(size.getWidth(), size.getHeight());
         mCameraParameters.setPictureSize(pictureSize.getWidth(), pictureSize.getHeight());
         mCameraParameters.setRotation(calcCameraRotation(mDisplayOrientation));
-        setAutoFocusInternal(mAutoFocus);
         camera.setParameters(mCameraParameters);
         if (mShowingPreview) {
             camera.startPreview();
@@ -354,25 +293,6 @@ public class Camera1 extends BaseCamera {
 
     private boolean isLandscape(int d) {
         return d == Constants.LANDSCAPE_90 || d == Constants.LANDSCAPE_270;
-    }
-
-    private boolean setAutoFocusInternal(boolean autoFocus) {
-        mAutoFocus = autoFocus;
-        if (isCameraOpened()) {
-            final List<String> modes = mCameraParameters.getSupportedFocusModes();
-            if (autoFocus && modes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            } else if (modes.contains(Camera.Parameters.FOCUS_MODE_FIXED)) {
-                mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
-            } else if (modes.contains(Camera.Parameters.FOCUS_MODE_INFINITY)) {
-                mCameraParameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-            } else {
-                mCameraParameters.setFocusMode(modes.get(0));
-            }
-            return true;
-        } else {
-            return false;
-        }
     }
 
 }

@@ -29,19 +29,11 @@ public abstract class BaseCamera {
 
     public abstract boolean isCameraOpened();
 
-    public abstract void setFacing(int facing);
-
-    public abstract int getFacing();
-
     public abstract Set<AspectRatio> getSupportedAspectRatios();
 
     public abstract boolean setAspectRatio(AspectRatio ratio);
 
     public abstract AspectRatio getAspectRatio();
-
-    public abstract void setAutoFocus(boolean autoFocus);
-
-    public abstract boolean getAutoFocus();
 
     public abstract void takePicture();
 
