@@ -20,6 +20,8 @@ public abstract class BaseCamera {
         return callback;
     }
 
+    public abstract void onSurfaceChanged();
+
     public abstract boolean start();
 
     public abstract void stop();

@@ -6,7 +6,6 @@ import com.quangcv.cameraview.lib.AspectRatio;
 import com.quangcv.cameraview.lib.CameraView;
 import com.quangcv.cameraview.lib.Size;
 import com.quangcv.cameraview.lib.SizeMap;
-import com.quangcv.cameraview.lib.SurfaceCallback;
 
 import java.io.IOException;
 import java.util.SortedSet;
@@ -25,15 +24,14 @@ public class Camera1 extends BaseCamera {
 
     public Camera1(CameraView preview) {
         super(preview);
-        preview.setSurfaceCallback(new SurfaceCallback() {
-            @Override
-            public void onSurfaceChanged() {
-                if (camera != null) {
-                    setUpPreview();
-                    adjustCameraParameters();
-                }
-            }
-        });
+    }
+
+    @Override
+    public void onSurfaceChanged() {
+        if (camera != null) {
+            setUpPreview();
+            adjustCameraParameters();
+        }
     }
 
     @Override
@@ -42,8 +40,8 @@ public class Camera1 extends BaseCamera {
         if (cameraView.isReady()) {
             setUpPreview();
         }
-        showingPreview = true;
         camera.startPreview();
+        showingPreview = true;
         return true;
     }
 
@@ -74,10 +72,7 @@ public class Camera1 extends BaseCamera {
         if (!isCameraOpened()) {
             throw new IllegalStateException("Camera is not ready. Call start() before takePicture().");
         }
-        takePictureInternal();
-    }
 
-    private void takePictureInternal() {
         if (!isPictureCaptureInProgress) {
             isPictureCaptureInProgress = true;
             camera.takePicture(null, null, null, new Camera.PictureCallback() {
@@ -94,8 +89,9 @@ public class Camera1 extends BaseCamera {
 
     private void openCamera() {
         if (camera != null) {
-            releaseCamera();
+            return;
         }
+
         camera = Camera.open(0);
         parameters = camera.getParameters();
         previewSizes.clear();

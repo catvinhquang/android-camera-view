@@ -25,7 +25,6 @@ import com.quangcv.cameraview.lib.AspectRatio;
 import com.quangcv.cameraview.lib.CameraView;
 import com.quangcv.cameraview.lib.Size;
 import com.quangcv.cameraview.lib.SizeMap;
-import com.quangcv.cameraview.lib.SurfaceCallback;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -152,12 +151,11 @@ public class Camera2 extends BaseCamera {
     public Camera2(CameraView preview, Context context) {
         super(preview);
         mCameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
-        cameraView.setSurfaceCallback(new SurfaceCallback() {
-            @Override
-            public void onSurfaceChanged() {
-                startCaptureSession();
-            }
-        });
+    }
+
+    @Override
+    public void onSurfaceChanged() {
+        startCaptureSession();
     }
 
     @Override
