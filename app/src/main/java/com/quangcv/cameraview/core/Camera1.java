@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Camera1 extends BaseCamera {
 
-    private boolean isPictureCaptureInProgress = false;
+    private boolean isTaking = false;
 
     private Camera camera;
     private Camera.Parameters parameters;
@@ -56,12 +56,12 @@ public class Camera1 extends BaseCamera {
 
     @Override
     public void takePicture() {
-        if (camera != null && !isPictureCaptureInProgress) {
-            isPictureCaptureInProgress = true;
+        if (camera != null && !isTaking) {
+            isTaking = true;
             camera.takePicture(null, null, null, new Camera.PictureCallback() {
                 @Override
                 public void onPictureTaken(byte[] data, Camera camera) {
-                    isPictureCaptureInProgress = false;
+                    isTaking = false;
                     callback.onPictureTaken(data);
                     camera.cancelAutoFocus();
                     camera.startPreview();
