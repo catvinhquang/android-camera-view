@@ -29,7 +29,6 @@ import com.quangcv.cameraview.lib.SurfaceCallback;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Set;
 
 @TargetApi(21)
 public class Camera2 extends BaseCamera {

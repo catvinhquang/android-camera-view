@@ -10,19 +10,14 @@ import com.quangcv.cameraview.lib.SurfaceCallback;
 
 import java.io.IOException;
 import java.util.SortedSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Camera1 extends BaseCamera {
 
-    private static final int INVALID_CAMERA_ID = -1;
+    private boolean isPictureCaptureInProgress = false;
+    private boolean showingPreview = false;
 
-    private AtomicBoolean isPictureCaptureInProgress = new AtomicBoolean(false);
-    private Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
     private SizeMap previewSizes = new SizeMap();
     private SizeMap pictureSizes = new SizeMap();
-
-    private int cameraId;
-    private boolean showingPreview;
 
     private Camera camera;
     private Camera.Parameters parameters;
@@ -43,7 +38,6 @@ public class Camera1 extends BaseCamera {
 
     @Override
     public boolean start() {
-        chooseCamera();
         openCamera();
         if (cameraView.isReady()) {
             setUpPreview();
@@ -83,12 +77,13 @@ public class Camera1 extends BaseCamera {
         takePictureInternal();
     }
 
-    void takePictureInternal() {
-        if (!isPictureCaptureInProgress.getAndSet(true)) {
+    private void takePictureInternal() {
+        if (!isPictureCaptureInProgress) {
+            isPictureCaptureInProgress = true;
             camera.takePicture(null, null, null, new Camera.PictureCallback() {
                 @Override
                 public void onPictureTaken(byte[] data, Camera camera) {
-                    isPictureCaptureInProgress.set(false);
+                    isPictureCaptureInProgress = false;
                     callback.onPictureTaken(data);
                     camera.cancelAutoFocus();
                     camera.startPreview();
@@ -97,20 +92,11 @@ public class Camera1 extends BaseCamera {
         }
     }
 
-    private void chooseCamera() {
-        if (Camera.getNumberOfCameras() > 0) {
-            Camera.getCameraInfo(0, cameraInfo);
-            cameraId = 0;
-            return;
-        }
-        cameraId = INVALID_CAMERA_ID;
-    }
-
     private void openCamera() {
         if (camera != null) {
             releaseCamera();
         }
-        camera = Camera.open(cameraId);
+        camera = Camera.open(0);
         parameters = camera.getParameters();
         previewSizes.clear();
         for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
@@ -127,7 +113,7 @@ public class Camera1 extends BaseCamera {
         callback.onCameraOpened();
     }
 
-    void adjustCameraParameters() {
+    private void adjustCameraParameters() {
         SortedSet<Size> sizes = previewSizes.sizes(aspectRatio);
         Size size = chooseOptimalSize(sizes);
 
