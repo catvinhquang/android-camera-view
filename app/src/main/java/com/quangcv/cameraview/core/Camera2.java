@@ -186,11 +186,6 @@ public class Camera2 extends BaseCamera {
     }
 
     @Override
-    public boolean isCameraOpened() {
-        return mCamera != null;
-    }
-
-    @Override
     public void takePicture() {
         captureStillPicture();
     }
@@ -296,7 +291,7 @@ public class Camera2 extends BaseCamera {
     }
 
     void startCaptureSession() {
-        if (!isCameraOpened() || !cameraView.isReady() || mImageReader == null) {
+        if (mCamera == null || !cameraView.isReady() || mImageReader == null) {
             return;
         }
         Surface surface = cameraView.getHolder().getSurface();

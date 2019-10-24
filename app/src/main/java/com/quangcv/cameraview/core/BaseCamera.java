@@ -26,8 +26,6 @@ public abstract class BaseCamera {
 
     public abstract void stop();
 
-    public abstract boolean isCameraOpened();
-
     public abstract void takePicture();
 
 }
