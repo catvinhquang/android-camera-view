@@ -36,11 +36,11 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         holder.addCallback(this);
 
         // TODO quangcv
-        if (Build.VERSION.SDK_INT < 21) {
+//        if (Build.VERSION.SDK_INT < 21) {
             impl = new Camera1(this);
-        } else {
-            impl = new Camera2(this, context);
-        }
+//        } else {
+//            impl = new Camera2(this, context);
+//        }
     }
 
     @Override
@@ -81,14 +81,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void setCallback(@NonNull CameraCallback callback) {
         impl.setCallback(callback);
-    }
-
-    public int getSurfaceWidth() {
-        return surfaceWidth;
-    }
-
-    public int getSurfaceHeight() {
-        return surfaceHeight;
     }
 
     public boolean isReady() {
