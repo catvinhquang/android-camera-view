@@ -35,7 +35,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(this);
 
-        // TODO quangcv
+        // TODO quangcv switch camera api
 //        if (Build.VERSION.SDK_INT < 21) {
             impl = new Camera1(this);
 //        } else {

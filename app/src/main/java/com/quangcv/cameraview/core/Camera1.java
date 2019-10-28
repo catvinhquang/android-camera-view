@@ -141,17 +141,34 @@ public class Camera1 extends BaseCamera {
         return previewSize;
     }
 
-    private static Camera.Size getPictureSize(List<Camera.Size> supportedSizes,
-                                              final int previewWidth,
-                                              final int previewHeight) {
+    private Camera.Size getPictureSize(List<Camera.Size> supportedSizes,
+                                       final int previewWidth,
+                                       final int previewHeight) {
+        // select element with smallest differrence
         return Collections.min(supportedSizes, new Comparator<Camera.Size>() {
             @Override
-            public int compare(Camera.Size o1, Camera.Size o2) {
-                int v1 = abs(previewWidth - o1.width) + abs(previewHeight - o1.height);
-                int v2 = abs(previewWidth - o2.width) + abs(previewHeight - o2.height);
-                return v1 - v2;
+            public int compare(Camera.Size l, Camera.Size r) {
+                int diff1 = abs(previewWidth - l.width) + abs(previewHeight - l.height);
+                int diff2 = abs(previewWidth - r.width) + abs(previewHeight - r.height);
+                return diff1 - diff2;
             }
         });
+    }
+
+    private Camera.Size select(List<Camera.Size> sizes,
+                               int viewWidth,
+                               int viewHeight) {
+        if (sizes == null || sizes.isEmpty()) return null;
+
+        double viewRatio = (double) viewWidth / viewHeight;
+        for (Camera.Size i : sizes) {
+            double itemRatio = (double) i.width / i.height;
+            double diffRatio = abs(viewRatio - itemRatio);
+
+            double diffSize = abs(viewWidth - i.width) + abs(viewHeight - i.height);
+        }
+
+        // TODO quangcv WIP
     }
 
 }
