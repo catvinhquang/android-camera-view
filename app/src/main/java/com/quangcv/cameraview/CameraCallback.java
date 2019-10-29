@@ -6,10 +6,6 @@ package com.quangcv.cameraview;
 
 public interface CameraCallback {
 
-    void onCameraOpened();
-
-    void onCameraClosed();
-
     void onPictureTaken(byte[] data);
 
 }

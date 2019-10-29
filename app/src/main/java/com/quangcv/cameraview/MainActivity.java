@@ -77,16 +77,6 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void onCameraOpened() {
-        Log.d(TAG, "onCameraOpened");
-    }
-
-    @Override
-    public void onCameraClosed() {
-        Log.d(TAG, "onCameraClosed");
-    }
-
-    @Override
     public void onPictureTaken(final byte[] data) {
         Log.d(TAG, "onPictureTaken " + data.length);
         Toast.makeText(this, "Picture taken", Toast.LENGTH_SHORT).show();

@@ -20,7 +20,9 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     private boolean isReady = false;
     private boolean isTakingPicture = false;
+    private boolean isUsingCameraBack = true;
     private Camera camera;
+    private Camera.CameraInfo cameraInfo;
     private CameraCallback callback;
 
     public CameraView(Context context) {
@@ -43,7 +45,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-
     }
 
     @Override
@@ -61,8 +62,17 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void start() {
         if (camera == null) {
-            camera = Camera.open(0);
-            callback.onCameraOpened();
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            int count = Camera.getNumberOfCameras();
+            for (int i = 0; i < count; i++) {
+                Camera.getCameraInfo(i, info);
+                if ((isUsingCameraBack && info.facing == Camera.CameraInfo.CAMERA_FACING_BACK)
+                        || (!isUsingCameraBack && info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT)) {
+                    cameraInfo = info;
+                    camera = Camera.open(i);
+                    break;
+                }
+            }
             startPreview();
         }
     }
@@ -72,23 +82,32 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
             try {
                 Camera.Parameters params = camera.getParameters();
 
+                // preview size
                 Camera.Size preSize = getPreviewSize(params.getSupportedPreviewSizes(),
                         getWidth(),
                         getHeight());
                 params.setPreviewSize(preSize.width, preSize.height);
 
-                // output size
+                // picture size
                 Camera.Size picSize = getPictureSize(params.getSupportedPictureSizes(),
                         preSize.width,
                         preSize.height);
                 params.setPictureSize(picSize.width, picSize.height);
 
-                // TODO quang: check focus feature is available
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE); // Auto focus
+                // enable auto focus
+                if (params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                }
 
-                // TODO quang: rotation formular
-                params.setRotation(90); // Để xuất hình portrait
-                camera.setDisplayOrientation(90); // Portrait preview
+                // TODO only support portrait
+                params.setRotation(cameraInfo.orientation % 360);
+
+                // TODO only support portrait
+                if (isUsingCameraBack) {
+                    camera.setDisplayOrientation((cameraInfo.orientation + 360) % 360);
+                } else {
+                    camera.setDisplayOrientation((360 - cameraInfo.orientation % 360) % 360);
+                }
 
                 camera.setParameters(params);
                 camera.setPreviewDisplay(getHolder());
@@ -159,7 +178,6 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         if (camera != null) {
             camera.release();
             camera = null;
-            callback.onCameraClosed();
         }
     }
 
