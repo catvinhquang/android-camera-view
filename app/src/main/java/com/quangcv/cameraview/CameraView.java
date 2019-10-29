@@ -1,20 +1,15 @@
-package com.quangcv.cameraview.lib;
+package com.quangcv.cameraview;
 
 import android.content.Context;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.quangcv.cameraview.core.BaseCamera;
-import com.quangcv.cameraview.core.Camera1;
-import com.quangcv.cameraview.core.Camera2;
-
 public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
-    private BaseCamera impl;
+    private Camera1Wrapper impl;
     private int surfaceWidth;
     private int surfaceHeight;
 
@@ -35,12 +30,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         holder.addCallback(this);
 
-        // TODO quangcv switch camera api
-//        if (Build.VERSION.SDK_INT < 21) {
-            impl = new Camera1(this);
-//        } else {
-//            impl = new Camera2(this, context);
-//        }
+        impl = new Camera1Wrapper(this);
     }
 
     @Override
@@ -65,7 +55,7 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
     public void start() {
         if (!impl.start()) {
             CameraCallback c = impl.getCallback();
-            impl = new Camera1(this);
+            impl = new Camera1Wrapper(this);
             impl.setCallback(c);
             impl.start();
         }

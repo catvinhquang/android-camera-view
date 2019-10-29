@@ -12,9 +12,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.quangcv.cameraview.lib.CameraCallback;
-import com.quangcv.cameraview.lib.CameraView;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

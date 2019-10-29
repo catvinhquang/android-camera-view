@@ -1,8 +1,6 @@
-package com.quangcv.cameraview.core;
+package com.quangcv.cameraview;
 
 import android.hardware.Camera;
-
-import com.quangcv.cameraview.lib.CameraView;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,16 +8,17 @@ import java.util.List;
 
 import static java.lang.Math.abs;
 
-public class Camera1 extends BaseCamera {
+public class Camera1Wrapper {
 
+    private CameraView cameraView;
+    private CameraCallback callback;
     private boolean isTakingPicture = false;
     private Camera camera;
 
-    public Camera1(CameraView preview) {
-        super(preview);
+    public Camera1Wrapper(CameraView preview) {
+        cameraView = preview;
     }
 
-    @Override
     public boolean start() {
         if (camera == null) {
             camera = Camera.open(0);
@@ -29,7 +28,6 @@ public class Camera1 extends BaseCamera {
         return true;
     }
 
-    @Override
     public void onSurfaceChanged() {
         startPreview();
     }
@@ -63,7 +61,6 @@ public class Camera1 extends BaseCamera {
         }
     }
 
-    @Override
     public void stop() {
         if (camera != null) {
             camera.stopPreview();
@@ -71,7 +68,6 @@ public class Camera1 extends BaseCamera {
         release();
     }
 
-    @Override
     public void takePicture() {
         if (camera != null && !isTakingPicture) {
             isTakingPicture = true;
@@ -141,6 +137,8 @@ public class Camera1 extends BaseCamera {
         return previewSize;
     }
 
+    // TODO quangcv : preview size thì same same nhau là được
+    // picture size thì phải tỉ lệ với preview size và lớn nhất có thể
     private Camera.Size getPictureSize(List<Camera.Size> supportedSizes,
                                        final int previewWidth,
                                        final int previewHeight) {
@@ -155,20 +153,28 @@ public class Camera1 extends BaseCamera {
         });
     }
 
-    private Camera.Size select(List<Camera.Size> sizes,
-                               int viewWidth,
-                               int viewHeight) {
-        if (sizes == null || sizes.isEmpty()) return null;
+//    private Camera.Size select(List<Camera.Size> sizes,
+//                               int viewWidth,
+//                               int viewHeight) {
+//        if (sizes == null || sizes.isEmpty()) return null;
+//
+//        double viewRatio = (double) viewWidth / viewHeight;
+//        for (Camera.Size i : sizes) {
+//            double itemRatio = (double) i.width / i.height;
+//            double diffRatio = abs(viewRatio - itemRatio);
+//
+//            double diffSize = abs(viewWidth - i.width) + abs(viewHeight - i.height);
+//        }
+//
+//        // TODO quangcv WIP
+//    }
 
-        double viewRatio = (double) viewWidth / viewHeight;
-        for (Camera.Size i : sizes) {
-            double itemRatio = (double) i.width / i.height;
-            double diffRatio = abs(viewRatio - itemRatio);
+    public void setCallback(CameraCallback callback) {
+        this.callback = callback;
+    }
 
-            double diffSize = abs(viewWidth - i.width) + abs(viewHeight - i.height);
-        }
-
-        // TODO quangcv WIP
+    public CameraCallback getCallback() {
+        return callback;
     }
 
 }
