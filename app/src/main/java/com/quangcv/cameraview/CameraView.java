@@ -3,8 +3,10 @@ package com.quangcv.cameraview;
 import android.content.Context;
 import android.hardware.Camera;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static java.lang.Math.abs;
 
-public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
+public class CameraView extends FrameLayout implements SurfaceHolder.Callback {
 
     private boolean isReady = false;
     private boolean isTakingPicture = false;
@@ -24,6 +26,9 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
     private Camera camera;
     private Camera.CameraInfo cameraInfo;
     private CameraCallback callback;
+
+    private SurfaceView surfaceView;
+    private SurfaceHolder surfaceHolder;
 
     public CameraView(Context context) {
         this(context, null);
@@ -38,9 +43,14 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
 
         if (isInEditMode()) return;
 
-        SurfaceHolder holder = getHolder();
-        holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        holder.addCallback(this);
+        surfaceView = new SurfaceView(context);
+        LayoutParams lp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        lp.gravity = Gravity.CENTER;
+        addView(surfaceView, lp);
+
+        surfaceHolder = surfaceView.getHolder();
+        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        surfaceHolder.addCallback(this);
     }
 
     @Override
@@ -109,8 +119,14 @@ public class CameraView extends SurfaceView implements SurfaceHolder.Callback {
                     camera.setDisplayOrientation((360 - cameraInfo.orientation % 360) % 360);
                 }
 
+                // update view size
+                LayoutParams lp = (LayoutParams) surfaceView.getLayoutParams();
+                lp.width = preSize.height * 2;
+                lp.height = preSize.width * 2;
+                surfaceView.setLayoutParams(lp);
+
                 camera.setParameters(params);
-                camera.setPreviewDisplay(getHolder());
+                camera.setPreviewDisplay(surfaceHolder);
                 camera.startPreview();
             } catch (Exception e) {
                 e.printStackTrace();
