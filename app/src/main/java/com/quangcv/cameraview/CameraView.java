@@ -1,6 +1,9 @@
 package com.quangcv.cameraview;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -22,6 +25,7 @@ public class CameraView extends FrameLayout {
     private boolean isCameraStarted = false;
     private boolean isSurfaceReady = false;
     private boolean isTakingPicture = false;
+    private double ratioPV, ratioPP;
 
     private Camera camera;
     private Camera.CameraInfo cameraInfo;
@@ -118,25 +122,33 @@ public class CameraView extends FrameLayout {
             isTakingPicture = true;
             camera.takePicture(null, null, null, new Camera.PictureCallback() {
                 @Override
-                public void onPictureTaken(byte[] data, Camera camera) {
-                    isTakingPicture = false;
+                public void onPictureTaken(final byte[] data, final Camera camera) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            isTakingPicture = false;
 
-                    // crop
-//                    Bitmap raw = BitmapFactory.decodeByteArray(data, 0, data.length);
-//                    int left = 0;
-//                    int top = 0;
-//                    int width = 0;
-//                    int height = 0;
-//                    Bitmap cropped = Bitmap.createBitmap(raw, left, top, width, height);
-//
-//                    // bitmap to byte array
-//                    int size = cropped.getRowBytes() * cropped.getHeight();
-//                    ByteBuffer byteBuffer = ByteBuffer.allocate(size);
-//                    cropped.copyPixelsToBuffer(byteBuffer);
-//                    data = byteBuffer.array();
+                            // preprocess picture
+                            int left = (int) (abs(getLeft() - surfaceView.getLeft()) / ratioPV * ratioPP);
+                            int top = (int) (abs(getTop() - surfaceView.getTop()) / ratioPV * ratioPP);
+                            int width = (int) (getWidth() / ratioPV * ratioPP);
+                            int height = (int) (getHeight() / ratioPV * ratioPP);
 
-                    listener.onPictureTaken(data);
-                    camera.startPreview();
+                            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                            Matrix matrix = new Matrix();
+                            matrix.postRotate(cameraInfo.orientation % 360);
+                            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                            bitmap = Bitmap.createBitmap(bitmap, left, top, width, height);
+
+                            final Bitmap finalBitmap = bitmap;
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    listener.onPictureTaken(finalBitmap);
+                                }
+                            });
+                        }
+                    }).start();
                 }
             });
         }
@@ -191,6 +203,8 @@ public class CameraView extends FrameLayout {
                 preSize.height);
         params.setPictureSize(picSize.width, picSize.height);
 
+        ratioPP = (double) picSize.width / preSize.width;
+
         // enable auto focus
         if (params.getSupportedFocusModes()
                 .contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
@@ -215,11 +229,15 @@ public class CameraView extends FrameLayout {
             expectedW = previewSize.width;
             expectedH = previewSize.height;
         }
+
         if (expectedW < viewW || expectedH < viewH) {
-            double ratio = max((double) viewW / expectedW, (double) viewH / expectedH);
-            expectedW = (int) (expectedW * ratio);
-            expectedH = (int) (expectedH * ratio);
+            ratioPV = max((double) viewW / expectedW, (double) viewH / expectedH);
+            expectedW = (int) (expectedW * ratioPV);
+            expectedH = (int) (expectedH * ratioPV);
+        } else {
+            ratioPV = 1;
         }
+
         LayoutParams lp = (LayoutParams) surfaceView.getLayoutParams();
         lp.width = expectedW;
         lp.height = expectedH;
@@ -227,7 +245,7 @@ public class CameraView extends FrameLayout {
     }
 
     public interface OnPictureTakenListener {
-        void onPictureTaken(byte[] data);
+        void onPictureTaken(Bitmap result);
     }
 
 }
