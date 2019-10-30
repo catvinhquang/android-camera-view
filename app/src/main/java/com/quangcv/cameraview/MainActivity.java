@@ -24,7 +24,7 @@ import java.io.OutputStream;
  */
 
 public class MainActivity extends Activity
-        implements ActivityCompat.OnRequestPermissionsResultCallback, CameraCallback {
+        implements ActivityCompat.OnRequestPermissionsResultCallback, CameraView.OnPictureTakenListener {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CAMERA_PERMISSION = 1;
@@ -36,11 +36,10 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
 
         cameraView = new CameraView(this);
-        cameraView.setCallback(this);
         cameraView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                cameraView.takePicture();
+                cameraView.takePicture(MainActivity.this);
             }
         });
 

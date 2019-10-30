@@ -8,25 +8,23 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 
-import androidx.annotation.NonNull;
-import androidx.core.view.ViewCompat;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.max;
 
-public class CameraView extends FrameLayout implements SurfaceHolder.Callback {
+public class CameraView extends FrameLayout {
 
-    private boolean isReady = false;
-    private boolean isTakingPicture = false;
     private boolean isUsingCameraBack = true;
+    private boolean isCameraStarted = false;
+    private boolean isSurfaceReady = false;
+    private boolean isTakingPicture = false;
+
     private Camera camera;
     private Camera.CameraInfo cameraInfo;
-    private CameraCallback callback;
-
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
 
@@ -40,7 +38,6 @@ public class CameraView extends FrameLayout implements SurfaceHolder.Callback {
 
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-
         if (isInEditMode()) return;
 
         surfaceView = new SurfaceView(context);
@@ -50,27 +47,29 @@ public class CameraView extends FrameLayout implements SurfaceHolder.Callback {
 
         surfaceHolder = surfaceView.getHolder();
         surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        surfaceHolder.addCallback(this);
-    }
+        surfaceHolder.addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                isSurfaceReady = true;
+                if (isCameraStarted) {
+                    start();
+                }
+            }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-    }
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            }
 
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        isReady = width != 0 && height != 0;
-        if (!ViewCompat.isInLayout(CameraView.this)) {
-            startPreview();
-        }
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        isReady = false;
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                isSurfaceReady = false;
+                stop();
+            }
+        });
     }
 
     public void start() {
+        isCameraStarted = true;
         if (camera == null) {
             Camera.CameraInfo info = new Camera.CameraInfo();
             int count = Camera.getNumberOfCameras();
@@ -83,49 +82,19 @@ public class CameraView extends FrameLayout implements SurfaceHolder.Callback {
                     break;
                 }
             }
-            startPreview();
         }
-    }
 
-    private void startPreview() {
-        if (camera != null && isReady) {
+        // start preview when surface is ready
+        if (isSurfaceReady) {
             try {
-                Camera.Parameters params = camera.getParameters();
-
-                // preview size
-                Camera.Size preSize = getPreviewSize(params.getSupportedPreviewSizes(),
-                        getWidth(),
-                        getHeight());
-                params.setPreviewSize(preSize.width, preSize.height);
-
-                // picture size
-                Camera.Size picSize = getPictureSize(params.getSupportedPictureSizes(),
-                        preSize.width,
-                        preSize.height);
-                params.setPictureSize(picSize.width, picSize.height);
-
-                // enable auto focus
-                if (params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                }
-
-                // TODO only support portrait
-                params.setRotation(cameraInfo.orientation % 360);
-
-                // TODO only support portrait
-                if (isUsingCameraBack) {
-                    camera.setDisplayOrientation((cameraInfo.orientation + 360) % 360);
-                } else {
-                    camera.setDisplayOrientation((360 - cameraInfo.orientation % 360) % 360);
-                }
-
-                // update view size
-                LayoutParams lp = (LayoutParams) surfaceView.getLayoutParams();
-                lp.width = preSize.height * 2;
-                lp.height = preSize.width * 2;
-                surfaceView.setLayoutParams(lp);
-
+                Camera.Parameters params = updateParameters(camera.getParameters(),
+                        getWidth(), getHeight());
+                updateViewSize(params.getPreviewSize());
                 camera.setParameters(params);
+                // TODO only support portrait: orientation of preview
+                camera.setDisplayOrientation(isUsingCameraBack ?
+                        (cameraInfo.orientation + 360) % 360 :
+                        (360 - cameraInfo.orientation % 360) % 360);
                 camera.setPreviewDisplay(surfaceHolder);
                 camera.startPreview();
             } catch (Exception e) {
@@ -135,21 +104,38 @@ public class CameraView extends FrameLayout implements SurfaceHolder.Callback {
     }
 
     public void stop() {
+        isCameraStarted = false;
+        isTakingPicture = false;
         if (camera != null) {
             camera.stopPreview();
+            camera.release();
+            camera = null;
         }
-        release();
     }
 
-    public void takePicture() {
+    public void takePicture(final OnPictureTakenListener listener) {
         if (camera != null && !isTakingPicture) {
             isTakingPicture = true;
             camera.takePicture(null, null, null, new Camera.PictureCallback() {
                 @Override
                 public void onPictureTaken(byte[] data, Camera camera) {
                     isTakingPicture = false;
-                    callback.onPictureTaken(data);
-                    camera.cancelAutoFocus();
+
+                    // crop
+//                    Bitmap raw = BitmapFactory.decodeByteArray(data, 0, data.length);
+//                    int left = 0;
+//                    int top = 0;
+//                    int width = 0;
+//                    int height = 0;
+//                    Bitmap cropped = Bitmap.createBitmap(raw, left, top, width, height);
+//
+//                    // bitmap to byte array
+//                    int size = cropped.getRowBytes() * cropped.getHeight();
+//                    ByteBuffer byteBuffer = ByteBuffer.allocate(size);
+//                    cropped.copyPixelsToBuffer(byteBuffer);
+//                    data = byteBuffer.array();
+
+                    listener.onPictureTaken(data);
                     camera.startPreview();
                 }
             });
@@ -190,15 +176,58 @@ public class CameraView extends FrameLayout implements SurfaceHolder.Callback {
         });
     }
 
-    private void release() {
-        if (camera != null) {
-            camera.release();
-            camera = null;
+    private Camera.Parameters updateParameters(Camera.Parameters params,
+                                               int viewWidth,
+                                               int viewHeight) {
+        // preview size
+        Camera.Size preSize = getPreviewSize(params.getSupportedPreviewSizes(),
+                viewWidth,
+                viewHeight);
+        params.setPreviewSize(preSize.width, preSize.height);
+
+        // picture size
+        Camera.Size picSize = getPictureSize(params.getSupportedPictureSizes(),
+                preSize.width,
+                preSize.height);
+        params.setPictureSize(picSize.width, picSize.height);
+
+        // enable auto focus
+        if (params.getSupportedFocusModes()
+                .contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         }
+
+        // TODO only support portrait: orientation of picture file
+        params.setRotation(cameraInfo.orientation % 360);
+
+        return params;
     }
 
-    public void setCallback(@NonNull CameraCallback callback) {
-        this.callback = callback;
+    private void updateViewSize(Camera.Size previewSize) {
+        int viewW = getWidth();
+        int viewH = getHeight();
+
+        int expectedW, expectedH;
+        if (cameraInfo.orientation == 90 || cameraInfo.orientation == 270) {
+            expectedW = previewSize.height;
+            expectedH = previewSize.width;
+        } else {
+            expectedW = previewSize.width;
+            expectedH = previewSize.height;
+        }
+        if (expectedW < viewW || expectedH < viewH) {
+            double ratio = max((double) viewW / expectedW, (double) viewH / expectedH);
+            expectedW = (int) (expectedW * ratio);
+            expectedH = (int) (expectedH * ratio);
+        }
+        LayoutParams lp = (LayoutParams) surfaceView.getLayoutParams();
+        lp.width = expectedW;
+        lp.height = expectedH;
+        surfaceView.setLayoutParams(lp);
+    }
+
+    public interface OnPictureTakenListener {
+        void onPictureTaken(byte[] data);
     }
 
 }
