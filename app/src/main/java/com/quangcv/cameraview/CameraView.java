@@ -3,7 +3,11 @@ package com.quangcv.cameraview;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -21,11 +25,11 @@ import static java.lang.Math.max;
 
 public class CameraView extends FrameLayout {
 
-    private boolean isUsingCameraBack = true;
-    private boolean isCameraStarted = false;
-    private boolean isSurfaceReady = false;
-    private boolean isTakingPicture = false;
+    private int facing = Camera.CameraInfo.CAMERA_FACING_BACK;
     private double ratioPV, ratioPP;
+    private boolean started = false;
+    private boolean surfaceReady = false;
+    private boolean takingPicture = false;
 
     private Camera camera;
     private Camera.CameraInfo cameraInfo;
@@ -54,8 +58,8 @@ public class CameraView extends FrameLayout {
         surfaceHolder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                isSurfaceReady = true;
-                if (isCameraStarted) {
+                surfaceReady = true;
+                if (started) {
                     start();
                 }
             }
@@ -66,21 +70,35 @@ public class CameraView extends FrameLayout {
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
-                isSurfaceReady = false;
+                surfaceReady = false;
                 stop();
             }
         });
     }
 
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        if (isInEditMode()) {
+            String tag = "<CameraView />";
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            paint.setColor(Color.BLACK);
+            paint.setTextSize(0.1f * getWidth());
+            paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+            float x = getWidth() / 2f - paint.measureText(tag) / 2f;
+            float y = getHeight() / 2f + paint.descent();
+            canvas.drawText(tag, x, y, paint);
+        }
+    }
+
     public void start() {
-        isCameraStarted = true;
+        started = true;
         if (camera == null) {
             Camera.CameraInfo info = new Camera.CameraInfo();
             int count = Camera.getNumberOfCameras();
             for (int i = 0; i < count; i++) {
                 Camera.getCameraInfo(i, info);
-                if ((isUsingCameraBack && info.facing == Camera.CameraInfo.CAMERA_FACING_BACK)
-                        || (!isUsingCameraBack && info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT)) {
+                if (info.facing == facing) {
                     cameraInfo = info;
                     camera = Camera.open(i);
                     break;
@@ -89,14 +107,14 @@ public class CameraView extends FrameLayout {
         }
 
         // start preview when surface is ready
-        if (isSurfaceReady) {
+        if (surfaceReady) {
             try {
                 Camera.Parameters params = updateParameters(camera.getParameters(),
                         getWidth(), getHeight());
                 updateViewSize(params.getPreviewSize());
                 camera.setParameters(params);
                 // TODO only support portrait: orientation of preview
-                camera.setDisplayOrientation(isUsingCameraBack ?
+                camera.setDisplayOrientation(facing == Camera.CameraInfo.CAMERA_FACING_BACK ?
                         (cameraInfo.orientation + 360) % 360 :
                         (360 - cameraInfo.orientation % 360) % 360);
                 camera.setPreviewDisplay(surfaceHolder);
@@ -108,8 +126,8 @@ public class CameraView extends FrameLayout {
     }
 
     public void stop() {
-        isCameraStarted = false;
-        isTakingPicture = false;
+        started = false;
+        takingPicture = false;
         if (camera != null) {
             camera.stopPreview();
             camera.release();
@@ -118,15 +136,15 @@ public class CameraView extends FrameLayout {
     }
 
     public void takePicture(final OnPictureTakenListener listener) {
-        if (camera != null && !isTakingPicture) {
-            isTakingPicture = true;
+        if (camera != null && !takingPicture) {
+            takingPicture = true;
             camera.takePicture(null, null, null, new Camera.PictureCallback() {
                 @Override
                 public void onPictureTaken(final byte[] data, final Camera camera) {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            isTakingPicture = false;
+                            takingPicture = false;
 
                             // preprocess picture
                             int left = (int) (abs(getLeft() - surfaceView.getLeft()) / ratioPV * ratioPP);
