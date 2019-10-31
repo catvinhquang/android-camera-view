@@ -124,6 +124,9 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
                 updateViewSize(params.getPreviewSize());
                 camera.setParameters(params);
                 // TODO only support portrait: orientation of preview
+                // TODO WIP
+                getDisplay().getRotation();
+
                 camera.setDisplayOrientation(facing == Camera.CameraInfo.CAMERA_FACING_BACK ?
                         (cameraInfo.orientation + 360) % 360 :
                         (360 - cameraInfo.orientation % 360) % 360);
