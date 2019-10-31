@@ -1,6 +1,8 @@
 package com.quangcv.cameraview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -9,12 +11,17 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.hardware.Camera;
+import android.os.Environment;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,18 +30,21 @@ import java.util.List;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 
-public class CameraView extends FrameLayout {
+public class CameraView extends FrameLayout implements Camera.PictureCallback {
 
-    private int facing = Camera.CameraInfo.CAMERA_FACING_BACK;
+    private static final String TAG = CameraView.class.getSimpleName();
+    private int facing = Camera.CameraInfo.CAMERA_FACING_FRONT;
     private double ratioPV, ratioPP;
     private boolean started = false;
     private boolean surfaceReady = false;
     private boolean takingPicture = false;
+    private long startTime;
 
     private Camera camera;
     private Camera.CameraInfo cameraInfo;
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
+    private OnPictureTakenListener listener;
 
     public CameraView(Context context) {
         this(context, null);
@@ -138,37 +148,79 @@ public class CameraView extends FrameLayout {
     public void takePicture(final OnPictureTakenListener listener) {
         if (camera != null && !takingPicture) {
             takingPicture = true;
-            camera.takePicture(null, null, null, new Camera.PictureCallback() {
-                @Override
-                public void onPictureTaken(final byte[] data, final Camera camera) {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            takingPicture = false;
+            this.listener = listener;
+            startTime = System.currentTimeMillis();
+            camera.takePicture(null, null, null, this);
+        }
+    }
 
-                            // preprocess picture
-                            int left = (int) (abs(getLeft() - surfaceView.getLeft()) / ratioPV * ratioPP);
-                            int top = (int) (abs(getTop() - surfaceView.getTop()) / ratioPV * ratioPP);
-                            int width = (int) (getWidth() / ratioPV * ratioPP);
-                            int height = (int) (getHeight() / ratioPV * ratioPP);
+    @Override
+    public void onPictureTaken(final byte[] data, Camera camera) {
+        Log.d(TAG, "onPictureTaken: complete in " + (System.currentTimeMillis() - startTime) + "ms");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final Bitmap result = preprocessPicture(data);
+                savePicture(result);
 
-                            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                            Matrix matrix = new Matrix();
-                            matrix.postRotate(cameraInfo.orientation % 360);
-                            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                            bitmap = Bitmap.createBitmap(bitmap, left, top, width, height);
+                // callback on UI thread
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onPictureTaken(result);
+                        listener = null;
+                    }
+                });
 
-                            final Bitmap finalBitmap = bitmap;
-                            post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    listener.onPictureTaken(finalBitmap);
-                                }
-                            });
-                        }
-                    }).start();
+                takingPicture = false;
+            }
+        }).start();
+    }
+
+    private Bitmap preprocessPicture(byte[] data) {
+        long time = System.currentTimeMillis();
+        int left = (int) (abs(getLeft() - surfaceView.getLeft()) / ratioPV * ratioPP);
+        int top = (int) (abs(getTop() - surfaceView.getTop()) / ratioPV * ratioPP);
+        int width = (int) (getWidth() / ratioPV * ratioPP);
+        int height = (int) (getHeight() / ratioPV * ratioPP);
+
+        Bitmap result = BitmapFactory.decodeByteArray(data, 0, data.length);
+        Matrix matrix = new Matrix();
+        // Some devices will actually save the JPEG image oriented correctly,
+        // but other devices will only save the EXIF header.
+//        boolean widthGTHeight = result.getWidth() > result.getHeight();
+//        boolean wrongOrientation = (isLandscape() && !widthGTHeight) || (!isLandscape() && widthGTHeight);
+//        if (wrongOrientation) {
+        matrix.preRotate(cameraInfo.orientation % 360);
+//        }
+        if (facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            // flip horizontal
+            matrix.postScale(-1, 1, result.getWidth() / 2, result.getHeight() / 2);
+        }
+        result = Bitmap.createBitmap(result, 0, 0, result.getWidth(), result.getHeight(), matrix, true);
+        result = Bitmap.createBitmap(result, left, top, width, height);
+        Log.d(TAG, "onPictureTaken: preprocess in " + (System.currentTimeMillis() - time) + "ms");
+
+        return result;
+    }
+
+    @SuppressLint("WrongThread")
+    private void savePicture(Bitmap result) {
+        File file = new File(getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "picture.jpg");
+        OutputStream os = null;
+        try {
+            os = new FileOutputStream(file);
+            result.compress(Bitmap.CompressFormat.JPEG, 100, os);
+            os.close();
+        } catch (Exception e) {
+            Log.w(TAG, "Cannot write to " + file, e);
+        } finally {
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (Exception ignore) {
                 }
-            });
+            }
         }
     }
 
@@ -199,9 +251,9 @@ public class CameraView extends FrameLayout {
         return Collections.max(filtered, new Comparator<Camera.Size>() {
             @Override
             public int compare(Camera.Size l, Camera.Size r) {
-                int diff1 = abs(previewWidth - l.width) + abs(previewHeight - l.height);
-                int diff2 = abs(previewWidth - r.width) + abs(previewHeight - r.height);
-                return diff1 - diff2;
+                int sum1 = l.width + l.height;
+                int sum2 = r.width + r.height;
+                return sum1 - sum2;
             }
         });
     }
@@ -221,6 +273,10 @@ public class CameraView extends FrameLayout {
                 preSize.height);
         params.setPictureSize(picSize.width, picSize.height);
 
+        Log.d(TAG, "updateParameters: view size = " + viewWidth + "x" + viewHeight);
+        Log.d(TAG, "updateParameters: preview size = " + preSize.width + "x" + preSize.height);
+        Log.d(TAG, "updateParameters: picture size = " + picSize.width + "x" + picSize.height);
+
         ratioPP = (double) picSize.width / preSize.width;
 
         // enable auto focus
@@ -230,7 +286,10 @@ public class CameraView extends FrameLayout {
         }
 
         // TODO only support portrait: orientation of picture file
-        params.setRotation(cameraInfo.orientation % 360);
+        // Some devices will actually save the JPEG image oriented correctly,
+        // but other devices will only save the EXIF header.
+        // dont need to set rotation, because we will rotate picture in preprocess phase
+//        params.setRotation(cameraInfo.orientation % 360);
 
         return params;
     }
@@ -260,6 +319,13 @@ public class CameraView extends FrameLayout {
         lp.width = expectedW;
         lp.height = expectedH;
         surfaceView.setLayoutParams(lp);
+    }
+
+    private boolean isLandscape() {
+        return getContext()
+                .getResources()
+                .getConfiguration()
+                .orientation == Configuration.ORIENTATION_LANDSCAPE;
     }
 
     public interface OnPictureTakenListener {

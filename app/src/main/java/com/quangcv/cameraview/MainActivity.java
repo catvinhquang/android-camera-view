@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -14,10 +12,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 
 /**
  * This demo app saves the taken picture to a constant file.
@@ -81,34 +75,10 @@ public class MainActivity extends Activity
 
     @Override
     public void onPictureTaken(final Bitmap result) {
-        Log.d(TAG, "onPictureTaken");
-
         cameraView.stop();
         cameraView.setVisibility(View.GONE);
         imageView.setImageBitmap(result);
         imageView.setVisibility(View.VISIBLE);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                File file = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "picture.jpg");
-                OutputStream os = null;
-                try {
-                    os = new FileOutputStream(file);
-                    result.compress(Bitmap.CompressFormat.JPEG, 100, os);
-                    os.close();
-                } catch (Exception e) {
-                    Log.w(TAG, "Cannot write to " + file, e);
-                } finally {
-                    if (os != null) {
-                        try {
-                            os.close();
-                        } catch (Exception ignore) {
-                        }
-                    }
-                }
-            }
-        }).start();
     }
 
     @Override
@@ -118,6 +88,8 @@ public class MainActivity extends Activity
             imageView.setVisibility(View.GONE);
             cameraView.start();
             cameraView.setVisibility(View.VISIBLE);
+        } else {
+            super.onBackPressed();
         }
     }
 
