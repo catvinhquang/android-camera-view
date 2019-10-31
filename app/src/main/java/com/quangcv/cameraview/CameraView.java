@@ -186,15 +186,10 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
 
         Bitmap result = BitmapFactory.decodeByteArray(data, 0, data.length);
         Matrix matrix = new Matrix();
-        // Some devices will actually save the JPEG image oriented correctly,
-        // but other devices will only save the EXIF header.
-//        boolean widthGTHeight = result.getWidth() > result.getHeight();
-//        boolean wrongOrientation = (isLandscape() && !widthGTHeight) || (!isLandscape() && widthGTHeight);
-//        if (wrongOrientation) {
+        // make sure the orientation is correct
         matrix.preRotate(cameraInfo.orientation % 360);
-//        }
         if (facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            // flip horizontal
+            // flip horizontal to look more natural
             matrix.postScale(-1, 1, result.getWidth() / 2, result.getHeight() / 2);
         }
         result = Bitmap.createBitmap(result, 0, 0, result.getWidth(), result.getHeight(), matrix, true);
@@ -285,12 +280,6 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
             params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         }
 
-        // TODO only support portrait: orientation of picture file
-        // Some devices will actually save the JPEG image oriented correctly,
-        // but other devices will only save the EXIF header.
-        // dont need to set rotation, because we will rotate picture in preprocess phase
-//        params.setRotation(cameraInfo.orientation % 360);
-
         return params;
     }
 
@@ -319,13 +308,6 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
         lp.width = expectedW;
         lp.height = expectedH;
         surfaceView.setLayoutParams(lp);
-    }
-
-    private boolean isLandscape() {
-        return getContext()
-                .getResources()
-                .getConfiguration()
-                .orientation == Configuration.ORIENTATION_LANDSCAPE;
     }
 
     public interface OnPictureTakenListener {
