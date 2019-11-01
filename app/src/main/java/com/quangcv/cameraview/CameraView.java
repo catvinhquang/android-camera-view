@@ -2,13 +2,13 @@ package com.quangcv.cameraview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.hardware.Camera;
 import android.os.Environment;
@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import java.io.File;
@@ -118,18 +119,11 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
 
         // start preview when surface is ready
         if (surfaceReady) {
+            Camera.Parameters params = updateParameters(camera.getParameters(), getWidth(), getHeight());
+            updateViewSize(params.getPreviewSize());
+            camera.setParameters(params);
+            camera.setDisplayOrientation(getDisplayOrientation());
             try {
-                Camera.Parameters params = updateParameters(camera.getParameters(),
-                        getWidth(), getHeight());
-                updateViewSize(params.getPreviewSize());
-                camera.setParameters(params);
-                // TODO only support portrait: orientation of preview
-                // TODO WIP
-                getDisplay().getRotation();
-
-                camera.setDisplayOrientation(facing == Camera.CameraInfo.CAMERA_FACING_BACK ?
-                        (cameraInfo.orientation + 360) % 360 :
-                        (360 - cameraInfo.orientation % 360) % 360);
                 camera.setPreviewDisplay(surfaceHolder);
                 camera.startPreview();
             } catch (Exception e) {
@@ -190,7 +184,7 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
         Bitmap result = BitmapFactory.decodeByteArray(data, 0, data.length);
         Matrix matrix = new Matrix();
         // make sure the orientation is correct
-        matrix.preRotate(cameraInfo.orientation % 360);
+        matrix.preRotate(-getDisplayOrientation());
         if (facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             // flip horizontal to look more natural
             matrix.postScale(-1, 1, result.getWidth() / 2, result.getHeight() / 2);
@@ -287,17 +281,14 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
     }
 
     private void updateViewSize(Camera.Size previewSize) {
+        RectF r = new RectF(0, 0, previewSize.width, previewSize.height);
+        Matrix m = new Matrix();
+        m.setRotate(getDisplayOrientation(), r.width() / 2, r.height() / 2);
+        m.mapRect(r);
+        int expectedW = (int) r.width();
+        int expectedH = (int) r.height();
         int viewW = getWidth();
         int viewH = getHeight();
-
-        int expectedW, expectedH;
-        if (cameraInfo.orientation == 90 || cameraInfo.orientation == 270) {
-            expectedW = previewSize.height;
-            expectedH = previewSize.width;
-        } else {
-            expectedW = previewSize.width;
-            expectedH = previewSize.height;
-        }
 
         if (expectedW < viewW || expectedH < viewH) {
             ratioPV = max((double) viewW / expectedW, (double) viewH / expectedH);
@@ -311,6 +302,23 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
         lp.width = expectedW;
         lp.height = expectedH;
         surfaceView.setLayoutParams(lp);
+    }
+
+    private int getDisplayOrientation() {
+        int rotation = 0;
+        try {
+            WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+            if (wm != null) {
+                int[] array = new int[]{0, 90, 180, 270};
+                rotation = array[wm.getDefaultDisplay().getRotation()];
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return facing == Camera.CameraInfo.CAMERA_FACING_FRONT ?
+                (360 - (cameraInfo.orientation + rotation) % 360) % 360 :
+                (cameraInfo.orientation - rotation + 360) % 360;
     }
 
     public interface OnPictureTakenListener {
