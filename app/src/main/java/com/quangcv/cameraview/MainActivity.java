@@ -21,7 +21,6 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends Activity
         implements ActivityCompat.OnRequestPermissionsResultCallback, CameraView.OnPictureTakenListener {
 
-    private static final String TAG = "MainActivity";
     private static final int REQUEST_CAMERA_PERMISSION = 1;
 
     private CameraView cameraView;

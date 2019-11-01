@@ -206,12 +206,12 @@ public class CameraView extends FrameLayout implements Camera.PictureCallback {
             os.close();
         } catch (Exception e) {
             Log.w(TAG, "Cannot write to " + file, e);
-        } finally {
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (Exception ignore) {
-                }
+        }
+
+        if (os != null) {
+            try {
+                os.close();
+            } catch (Exception ignore) {
             }
         }
     }
